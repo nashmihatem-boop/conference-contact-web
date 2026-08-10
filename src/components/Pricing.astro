@@ -78,6 +78,7 @@ const savings = [
         </p>
 
         <a
+          id="pricing-cta"
           href="/signup"
           class="mt-5 block rounded-xl bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark"
         >
@@ -85,6 +86,20 @@ const savings = [
         </a>
       </div>
     </div>
+
+    <script>
+      // A signed-in visitor already has an account — sending them through
+      // the signup form again would ask for a name/password they don't
+      // need. Send them straight to where the actual Subscribe button
+      // lives instead. isAuthenticated() is enough here (no need for the
+      // async cookie-refresh check): if this tab isn't already signed in,
+      // /signup is exactly right regardless of whether another tab is.
+      import { isAuthenticated } from "../lib/session";
+      const cta = document.querySelector<HTMLAnchorElement>("#pricing-cta");
+      if (cta && isAuthenticated()) {
+        cta.href = "/account/billing";
+      }
+    </script>
 
     <div class="mx-auto mt-8 max-w-2xl">
       <p class="text-center text-[13px] font-semibold uppercase tracking-wide text-ink-faint">

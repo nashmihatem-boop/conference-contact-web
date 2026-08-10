@@ -90,6 +90,16 @@ const exampleQueries = [
 
 <script>
   import { apiFetch, ApiError } from "../lib/api";
+  import { isAuthenticated } from "../lib/session";
+
+  // This whole page is the anonymous, 3-searches-a-day demo meant to get
+  // someone to sign up — a visitor who already has an account (e.g.
+  // clicked "AI Lead Finder" in the nav while signed in) should land in
+  // the real app instead, with their real credit balance, not be capped
+  // by the same daily limit and pointed at /signup when it runs out.
+  if (isAuthenticated()) {
+    window.location.href = "/leads-finder";
+  }
 
   interface AnonymousSearchResult {
     name: string | null;

@@ -48,6 +48,7 @@
         for full directory access.
       </p>
       <a
+        id="demo-cta"
         href="/signup"
         class="mt-5 inline-block rounded-full bg-lime px-6 py-3 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark"
       >
@@ -69,6 +70,14 @@
 <script>
   import { apiFetch, ApiError } from "../lib/api";
   import { escapeHtml, formatCompanyType } from "../lib/leads-table";
+  import { isAuthenticated } from "../lib/session";
+
+  // Same reasoning as Pricing.astro/CTA.astro — a signed-in visitor should
+  // land where the Subscribe button actually is, not a signup form.
+  const demoCta = document.querySelector<HTMLAnchorElement>("#demo-cta");
+  if (demoCta && isAuthenticated()) {
+    demoCta.href = "/account/billing";
+  }
 
   interface PreviewLead {
     name: string;
