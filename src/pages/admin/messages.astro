@@ -120,7 +120,7 @@ import AdminNav from "../../components/AdminNav.astro";
           <a href="mailto:${escapeHtml(msg.email)}" class="text-[12px] text-navy hover:text-navy-mid">${escapeHtml(msg.email)}</a>
         </td>
         <td class="px-4 py-3"><span class="whitespace-nowrap rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft">${escapeHtml(REASON_LABELS[msg.reason] ?? msg.reason)}</span></td>
-        <td class="px-4 py-3 max-w-md text-[13px] text-ink-soft">${escapeHtml(msg.message)}</td>
+        <td class="max-w-xs break-words px-4 py-3 text-[13px] text-ink-soft">${escapeHtml(msg.message)}</td>
         <td class="px-4 py-3">
           ${
             msg.resolved
@@ -129,7 +129,22 @@ import AdminNav from "../../components/AdminNav.astro";
           }
         </td>
         <td class="px-4 py-3">
-          ${!msg.resolved ? `<button type="button" data-resolve="${escapeHtml(msg.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Mark resolved</button>` : `<span class="text-[12px] text-ink-faint">—</span>`}
+          <div class="flex flex-col items-start gap-1.5">
+            ${!msg.resolved ? `<button type="button" data-resolve="${escapeHtml(msg.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Mark resolved</button>` : ""}
+            <button type="button" data-reply="${escapeHtml(msg.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Reply</button>
+            <button type="button" data-delete="${escapeHtml(msg.id)}" class="text-[12px] font-medium text-red-600 hover:text-red-700">Delete</button>
+          </div>
+        </td>
+      </tr>
+      <tr data-reply-row="${escapeHtml(msg.id)}" hidden class="border-b border-line last:border-b-0">
+        <td colspan="6" class="bg-bg-soft px-4 py-3">
+          <label class="block text-[12px] font-medium text-ink-soft">Reply to ${escapeHtml(msg.email)}</label>
+          <textarea data-reply-text="${escapeHtml(msg.id)}" rows="3" class="mt-1.5 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink focus:outline-none" placeholder="Type your reply — it's sent to ${escapeHtml(msg.email)} as an email."></textarea>
+          <div class="mt-2 flex items-center gap-3">
+            <button type="button" data-send-reply="${escapeHtml(msg.id)}" class="rounded-lg bg-navy px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-navy-mid">Send reply</button>
+            <button type="button" data-cancel-reply="${escapeHtml(msg.id)}" class="text-[12px] font-medium text-ink-soft hover:text-ink">Cancel</button>
+            <span data-reply-status="${escapeHtml(msg.id)}" class="text-[12px] text-ink-faint"></span>
+          </div>
         </td>
       </tr>`;
   }
@@ -143,6 +158,63 @@ import AdminNav from "../../components/AdminNav.astro";
     resultsBody.querySelectorAll<HTMLButtonElement>("[data-resolve]").forEach((button) => {
       button.addEventListener("click", () => void handleResolve(button));
     });
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-delete]").forEach((button) => {
+      button.addEventListener("click", () => void handleDelete(button.dataset.delete!));
+    });
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-reply]").forEach((button) => {
+      button.addEventListener("click", () => toggleReplyRow(button.dataset.reply!));
+    });
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-cancel-reply]").forEach((button) => {
+      button.addEventListener("click", () => toggleReplyRow(button.dataset.cancelReply!, false));
+    });
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-send-reply]").forEach((button) => {
+      button.addEventListener("click", () => void handleSendReply(button.dataset.sendReply!));
+    });
+  }
+
+  function toggleReplyRow(id: string, show?: boolean): void {
+    const row = resultsBody.querySelector<HTMLTableRowElement>(`[data-reply-row="${id}"]`);
+    if (!row) return;
+    row.hidden = show === undefined ? !row.hidden : !show;
+    if (!row.hidden) {
+      resultsBody.querySelector<HTMLTextAreaElement>(`[data-reply-text="${id}"]`)?.focus();
+    }
+  }
+
+  async function handleDelete(id: string): Promise<void> {
+    if (!window.confirm("Delete this message? This can't be undone.")) return;
+    try {
+      await authFetch(`/admin/contact-messages/${id}`, { method: "DELETE" });
+      await loadPage(currentPage);
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  async function handleSendReply(id: string): Promise<void> {
+    const textarea = resultsBody.querySelector<HTMLTextAreaElement>(`[data-reply-text="${id}"]`)!;
+    const sendButton = resultsBody.querySelector<HTMLButtonElement>(`[data-send-reply="${id}"]`)!;
+    const status = resultsBody.querySelector<HTMLSpanElement>(`[data-reply-status="${id}"]`)!;
+    const message = textarea.value.trim();
+    if (!message) {
+      status.textContent = "Write a reply first.";
+      return;
+    }
+    sendButton.disabled = true;
+    status.textContent = "Sending…";
+    try {
+      await authFetch(`/admin/contact-messages/${id}/reply`, {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      });
+      status.textContent = "Reply sent.";
+      textarea.value = "";
+      setTimeout(() => toggleReplyRow(id, false), 1200);
+    } catch (err) {
+      sendButton.disabled = false;
+      status.textContent = "Failed to send — try again.";
+      handleAdminError(err, errorBanner);
+    }
   }
 
   async function handleResolve(button: HTMLButtonElement): Promise<void> {
