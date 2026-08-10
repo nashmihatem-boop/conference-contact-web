@@ -45,7 +45,11 @@ import AdminNav from "../../components/AdminNav.astro";
           </div>
           <div>
             <label for="field-likely" class="mb-1.5 block text-[13px] font-semibold text-ink">Likely to attend *</label>
-            <input id="field-likely" required maxlength="200" placeholder="e.g. Leadscon 2026" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+            <select id="field-likely" required class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none">
+              <option value="">Select a conference…</option>
+              <option value="__other__">Other (type below)</option>
+            </select>
+            <input id="field-likely-custom" hidden maxlength="200" placeholder="Conference name" class="mt-2 w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
           </div>
           <div>
             <label for="field-email" class="mb-1.5 block text-[13px] font-semibold text-ink">Email</label>
@@ -201,7 +205,8 @@ import AdminNav from "../../components/AdminNav.astro";
   const fieldTitle = document.querySelector<HTMLInputElement>("#field-title")!;
   const fieldCompany = document.querySelector<HTMLInputElement>("#field-company")!;
   const fieldCompanyType = document.querySelector<HTMLSelectElement>("#field-company-type")!;
-  const fieldLikely = document.querySelector<HTMLInputElement>("#field-likely")!;
+  const fieldLikely = document.querySelector<HTMLSelectElement>("#field-likely")!;
+  const fieldLikelyCustom = document.querySelector<HTMLInputElement>("#field-likely-custom")!;
   const fieldEmail = document.querySelector<HTMLInputElement>("#field-email")!;
   const fieldPhone = document.querySelector<HTMLInputElement>("#field-phone")!;
   const fieldWebsite = document.querySelector<HTMLInputElement>("#field-website")!;
@@ -305,7 +310,27 @@ import AdminNav from "../../components/AdminNav.astro";
   function resetForm(): void {
     form.reset();
     fieldCompanyType.value = "ADVERTISER";
+    fieldLikelyCustom.hidden = true;
+    fieldLikelyCustom.value = "";
   }
+
+  function setLikelyToAttend(value: string): void {
+    const knownOption = Array.from(fieldLikely.options).find((opt) => opt.value === value);
+    if (knownOption) {
+      fieldLikely.value = value;
+      fieldLikelyCustom.hidden = true;
+      fieldLikelyCustom.value = "";
+    } else {
+      fieldLikely.value = "__other__";
+      fieldLikelyCustom.hidden = false;
+      fieldLikelyCustom.value = value;
+    }
+  }
+
+  fieldLikely.addEventListener("change", () => {
+    fieldLikelyCustom.hidden = fieldLikely.value !== "__other__";
+    if (!fieldLikelyCustom.hidden) fieldLikelyCustom.focus();
+  });
 
   function openCreateForm(): void {
     editingId = null;
@@ -324,7 +349,7 @@ import AdminNav from "../../components/AdminNav.astro";
     fieldTitle.value = lead.title ?? "";
     fieldCompany.value = lead.company ?? "";
     fieldCompanyType.value = lead.companyType;
-    fieldLikely.value = lead.likelyToAttend;
+    setLikelyToAttend(lead.likelyToAttend);
     fieldEmail.value = lead.email ?? "";
     fieldPhone.value = lead.phone ?? "";
     fieldWebsite.value = lead.website ?? "";
@@ -349,10 +374,13 @@ import AdminNav from "../../components/AdminNav.astro";
     formSubmit.disabled = true;
     formSubmit.textContent = "Saving…";
 
+    const likelyToAttend =
+      fieldLikely.value === "__other__" ? fieldLikelyCustom.value.trim() : fieldLikely.value;
+
     const body: Record<string, string | undefined> = {
       name: fieldName.value.trim(),
       companyType: fieldCompanyType.value,
-      likelyToAttend: fieldLikely.value.trim(),
+      likelyToAttend,
       title: fieldTitle.value.trim() || undefined,
       company: fieldCompany.value.trim() || undefined,
       email: fieldEmail.value.trim() || undefined,
@@ -406,11 +434,17 @@ import AdminNav from "../../components/AdminNav.astro";
 
   async function loadFilters(): Promise<void> {
     const filters = await authFetch<LeadFilters>("/admin/leads/filters");
+    const otherOption = fieldLikely.querySelector('option[value="__other__"]')!;
     for (const event of filters.events) {
-      const option = document.createElement("option");
-      option.value = event;
-      option.textContent = event;
-      eventSelect.appendChild(option);
+      const filterOption = document.createElement("option");
+      filterOption.value = event;
+      filterOption.textContent = event;
+      eventSelect.appendChild(filterOption);
+
+      const formOption = document.createElement("option");
+      formOption.value = event;
+      formOption.textContent = event;
+      fieldLikely.insertBefore(formOption, otherOption);
     }
   }
 
