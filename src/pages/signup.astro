@@ -164,7 +164,7 @@ const highlights = [
             type="submit"
             class="mt-1 rounded-xl bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Continue to payment →
+            Verify →
           </button>
           <p id="code-resend-line" class="text-center text-[13px] text-ink-soft">
             Didn't get a code?
@@ -346,7 +346,7 @@ const highlights = [
     } catch (err) {
       showError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
       codeSubmit.disabled = false;
-      codeSubmit.textContent = "Continue to payment →";
+      codeSubmit.textContent = "Verify →";
     }
   });
 
