@@ -1,0 +1,206 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Prospects — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-[1600px] px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Prospects</h1>
+    <p class="mt-1 text-[14px] text-ink-soft">Signed-up users who've never bought the Directory subscription. Oldest signups first.</p>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 sm:flex-row sm:items-center">
+        <div class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-white px-3 py-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-ink-faint">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            autocomplete="off"
+            placeholder="Search by email or name…"
+            class="w-full text-[14px] text-ink placeholder:text-ink-faint focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[860px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">User</th>
+              <th class="px-4 py-3 font-semibold">Signed up</th>
+              <th class="px-4 py-3 font-semibold">Days since signup</th>
+              <th class="px-4 py-3 font-semibold">Last login</th>
+              <th class="px-4 py-3 font-semibold">Send a pitch</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { escapeHtml, formatDate, handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface Prospect {
+    id: string;
+    email: string;
+    fullName: string;
+    createdAt: string;
+    lastLoginAt: string | null;
+    daysSinceSignup: number;
+  }
+  interface ProspectsPage {
+    data: Prospect[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  const PAGE_SIZE = 25;
+  const TEMPLATES: { value: string; label: string }[] = [
+    { value: "INTRO", label: "Intro" },
+    { value: "VALUE", label: "Value" },
+    { value: "URGENCY", label: "Urgency" },
+  ];
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const searchInput = document.querySelector<HTMLInputElement>("#search-input")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+
+  let currentPage = 1;
+  let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+
+  function currentFilters(): URLSearchParams {
+    const params = new URLSearchParams();
+    if (searchInput.value.trim()) params.set("search", searchInput.value.trim());
+    return params;
+  }
+
+  function rowHtml(prospect: Prospect): string {
+    const pitchButtons = TEMPLATES.map(
+      (t) =>
+        `<button type="button" data-pitch="${t.value}" data-id="${escapeHtml(prospect.id)}" class="rounded-lg border border-line px-2.5 py-1 text-[12px] font-medium text-navy transition-colors hover:border-navy hover:bg-bg-soft">${t.label}</button>`,
+    ).join("");
+
+    return `
+      <tr class="border-b border-line last:border-b-0 align-top">
+        <td class="px-4 py-3">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(prospect.fullName)}</p>
+          <a href="mailto:${escapeHtml(prospect.email)}" class="text-[12px] text-navy hover:text-navy-mid">${escapeHtml(prospect.email)}</a>
+        </td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft whitespace-nowrap">${formatDate(prospect.createdAt)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${prospect.daysSinceSignup}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft whitespace-nowrap">${formatDate(prospect.lastLoginAt)}</td>
+        <td class="px-4 py-3">
+          <div class="flex flex-wrap items-center gap-1.5">
+            ${pitchButtons}
+            <span data-pitch-status="${escapeHtml(prospect.id)}" class="text-[12px] text-ink-faint"></span>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  function renderRows(prospects: Prospect[]): void {
+    if (prospects.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">No prospects match these filters — everyone here has either subscribed or hasn't signed up yet.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = prospects.map(rowHtml).join("");
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-pitch]").forEach((button) => {
+      button.addEventListener("click", () => void handlePitch(button));
+    });
+  }
+
+  async function handlePitch(button: HTMLButtonElement): Promise<void> {
+    const id = button.dataset.id!;
+    const template = button.dataset.pitch!;
+    const status = resultsBody.querySelector<HTMLSpanElement>(`[data-pitch-status="${id}"]`)!;
+    const row = button.closest("tr")!;
+    const allButtons = row.querySelectorAll<HTMLButtonElement>("[data-pitch]");
+    allButtons.forEach((b) => (b.disabled = true));
+    status.textContent = "Sending…";
+    status.className = "text-[12px] text-ink-soft";
+    try {
+      await authFetch(`/admin/prospects/${id}/pitch`, {
+        method: "POST",
+        body: JSON.stringify({ template }),
+      });
+      status.textContent = "Sent.";
+      status.className = "text-[12px] text-navy";
+    } catch (err) {
+      status.textContent = "";
+      handleAdminError(err, errorBanner);
+    } finally {
+      allButtons.forEach((b) => (b.disabled = false));
+    }
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = currentFilters();
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<ProspectsPage>(`/admin/prospects?${params.toString()}`);
+      renderRows(result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} prospect${result.total === 1 ? "" : "s"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => loadPage(1), 350);
+  });
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  async function init(): Promise<void> {
+    if (!(await requireSignedIn())) return;
+    try {
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>
