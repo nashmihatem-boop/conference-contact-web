@@ -1,4 +1,4 @@
-import { getAccessToken } from "./session";
+import { getAccessToken, saveAccessToken } from "./session";
 
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
@@ -14,10 +14,10 @@ export class ApiError extends Error {
 }
 
 /**
- * No `credentials: "include"` — nothing here relies on cookies. The API's
- * refresh-token cookie is SameSite=Strict and scoped to its own origin, so
- * it could never be sent back from this (different-origin) site anyway;
- * every call here authenticates purely via the Authorization header.
+ * `credentials: "include"` — the API's refresh-token cookie is scoped to
+ * api.conference.contact, a same-site (though cross-subdomain) origin from
+ * this site, so the browser will actually send/store it here. That's what
+ * makes silent, cross-tab session restore in session.ts possible.
  */
 export async function apiFetch<T>(
   path: string,
@@ -25,6 +25,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
@@ -46,7 +47,13 @@ export async function apiFetch<T>(
   return body as T;
 }
 
-/** Same as apiFetch, but attaches the stored access token — for routes that require sign-in. */
+/**
+ * Same as apiFetch, but attaches the stored access token — for routes that
+ * require sign-in. On a 401 (the access token expired mid-session — it only
+ * lives 15 minutes), tries one silent refresh via the cookie and retries
+ * once before giving up, so an active user isn't kicked out just because
+ * 15 minutes passed.
+ */
 export async function authFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -55,11 +62,44 @@ export async function authFetch<T>(
   if (!token) {
     throw new ApiError("Not signed in", 401);
   }
-  return apiFetch<T>(path, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    return await apiFetch<T>(path, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.statusCode !== 401) throw err;
+    const refreshed = await refreshAccessToken();
+    if (!refreshed) throw err;
+    saveAccessToken(refreshed);
+    return apiFetch<T>(path, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${refreshed}`,
+      },
+    });
+  }
+}
+
+/**
+ * Exchanges the httpOnly refresh cookie for a fresh access token — no
+ * credentials needed client-side, the browser just has to have the cookie.
+ * Returns null on any failure (expired/missing cookie, network error, etc.)
+ * rather than throwing, since every caller treats "couldn't refresh" as
+ * "just isn't signed in," not an error to surface.
+ */
+export async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const result = await apiFetch<{ accessToken: string | null }>(
+      "/auth/refresh",
+      { method: "POST" },
+    );
+    return result.accessToken ?? null;
+  } catch {
+    return null;
+  }
 }

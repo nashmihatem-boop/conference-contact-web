@@ -156,7 +156,7 @@ import AdminNav from "../../components/AdminNav.astro";
   nextButton.addEventListener("click", () => loadPage(currentPage + 1));
 
   async function init(): Promise<void> {
-    if (!requireSignedIn()) return;
+    if (!(await requireSignedIn())) return;
     try {
       await loadPage(1);
       loading.hidden = true;

@@ -415,7 +415,7 @@ import AdminNav from "../../components/AdminNav.astro";
   }
 
   async function init(): Promise<void> {
-    if (!requireSignedIn()) return;
+    if (!(await requireSignedIn())) return;
     try {
       await loadFilters();
       await loadPage(1);

@@ -128,7 +128,7 @@ import Footer from "../../components/Footer.astro";
 
 <script>
   import { authFetch, ApiError } from "../../lib/api";
-  import { clearAccessToken, isAuthenticated, redirectToSignin } from "../../lib/session";
+  import { clearAccessToken, ensureAuthenticated, redirectToSignin } from "../../lib/session";
 
   interface SubscriptionStatus {
     status: "NONE" | "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED";
@@ -154,7 +154,7 @@ import Footer from "../../components/Footer.astro";
   const cancelModalKeep = document.querySelector<HTMLButtonElement>("#cancel-modal-keep")!;
   const cancelModalConfirm = document.querySelector<HTMLButtonElement>("#cancel-modal-confirm")!;
 
-  if (!isAuthenticated()) {
+  if (!(await ensureAuthenticated())) {
     redirectToSignin();
   } else {
     void loadStatus();

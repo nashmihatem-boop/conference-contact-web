@@ -99,9 +99,16 @@ const links = [
 
 <script>
   import { apiFetch } from "../lib/api";
-  import { clearAccessToken, getImpersonatorId, getTokenEmail, getTokenRole, isAuthenticated } from "../lib/session";
+  import {
+    clearAccessToken,
+    ensureAuthenticated,
+    getImpersonatorId,
+    getTokenEmail,
+    getTokenRole,
+    isAuthenticated,
+  } from "../lib/session";
 
-  if (isAuthenticated()) {
+  function renderSignedInNav(): void {
     document.querySelector<HTMLAnchorElement>("#nav-signed-out")?.setAttribute("hidden", "");
     document.querySelector<HTMLAnchorElement>("#nav-signup")?.setAttribute("hidden", "");
 
@@ -142,11 +149,10 @@ const links = [
     }
 
     signoutButton?.addEventListener("click", async () => {
-      // Best-effort: the API reads the refresh-token cookie to revoke the
-      // server-side session, but that cookie can never have reached this
-      // origin in the first place (see session.ts) — this call mostly just
-      // returns { message: 'Logged out' } as a no-op. The real sign-out is
-      // clearing the token client-side, which happens regardless.
+      // Revokes the server-side session via the refresh-token cookie, so
+      // this account is actually signed out everywhere the cookie is
+      // valid — not just this tab. Best-effort: clearing the token
+      // client-side below happens regardless of whether this succeeds.
       try {
         await apiFetch("/auth/logout", { method: "POST" });
       } catch {
@@ -179,5 +185,18 @@ const links = [
         });
       }
     }
+  }
+
+  // This tab already has an access token: render immediately, no network
+  // round-trip. Otherwise (a fresh tab, or one opened after the last token
+  // expired) try the refresh cookie silently before falling back to the
+  // signed-out nav — this is what makes "open a new tab, still signed in"
+  // work without every page load costing a request for already-active tabs.
+  if (isAuthenticated()) {
+    renderSignedInNav();
+  } else {
+    void ensureAuthenticated().then((ok) => {
+      if (ok) renderSignedInNav();
+    });
   }
 </script>

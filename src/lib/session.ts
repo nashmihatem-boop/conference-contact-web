@@ -1,14 +1,14 @@
 const ACCESS_TOKEN_KEY = "cc_access_token";
 
 /**
- * sessionStorage, not localStorage — clears when the tab closes, which is
- * fine (arguably correct) here since there's no working silent-refresh
- * flow for this site to rely on anyway (see account.astro / signin.astro
- * comments on why: the API's refresh cookie is SameSite=Strict and this
- * site is a different origin, so it can never be sent back cross-site).
- * When the access token expires (15 min) or a call 401s, the user just
- * signs in again — that's the real, current behavior, not a bug to route
- * around client-side.
+ * sessionStorage, not localStorage — the access token itself is still
+ * per-tab and clears when the tab closes, but that's no longer what "stay
+ * signed in" depends on. The real, durable session is the httpOnly refresh
+ * cookie (SameSite=Strict, 30 days), now reachable from this site because
+ * the API lives on api.conference.contact — same registrable domain. A new
+ * tab with no access token in sessionStorage silently exchanges that
+ * cookie for a fresh one via ensureAuthenticated() below instead of
+ * forcing a fresh sign-in.
  */
 export function saveAccessToken(token: string): void {
   sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
@@ -24,6 +24,23 @@ export function clearAccessToken(): void {
 
 export function isAuthenticated(): boolean {
   return getAccessToken() !== null;
+}
+
+/**
+ * The real "is this browser signed in" check — call this instead of
+ * isAuthenticated() when guarding a page or deciding what to render.
+ * Fast path: this tab already has an access token, no network call. Slow
+ * path (new tab, or the token expired since this page's script last ran):
+ * silently trade the refresh cookie for a new one. Only returns false if
+ * that also fails, meaning the user is genuinely signed out.
+ */
+export async function ensureAuthenticated(): Promise<boolean> {
+  if (isAuthenticated()) return true;
+  const { refreshAccessToken } = await import("./api");
+  const token = await refreshAccessToken();
+  if (!token) return false;
+  saveAccessToken(token);
+  return true;
 }
 
 /**

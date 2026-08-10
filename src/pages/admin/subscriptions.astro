@@ -205,7 +205,7 @@ import AdminNav from "../../components/AdminNav.astro";
   }
 
   async function init(): Promise<void> {
-    if (!requireSignedIn()) return;
+    if (!(await requireSignedIn())) return;
     try {
       setActiveTab(currentProduct);
       await loadPage(1);

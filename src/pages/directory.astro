@@ -97,7 +97,7 @@ import Footer from "../components/Footer.astro";
 
 <script>
   import { authFetch, ApiError } from "../lib/api";
-  import { clearAccessToken, getAccessToken, isAuthenticated, redirectToSignin } from "../lib/session";
+  import { clearAccessToken, ensureAuthenticated, getAccessToken, redirectToSignin } from "../lib/session";
   import { renderLeadRows, formatCompanyType, type Lead } from "../lib/leads-table";
 
   interface LeadsPage {
@@ -241,7 +241,7 @@ import Footer from "../components/Footer.astro";
   });
 
   async function init(): Promise<void> {
-    if (!isAuthenticated()) {
+    if (!(await ensureAuthenticated())) {
       redirectToSignin();
       return;
     }

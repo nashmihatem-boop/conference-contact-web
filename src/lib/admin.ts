@@ -1,5 +1,5 @@
 import { ApiError } from "./api";
-import { clearAccessToken, isAuthenticated, redirectToSignin } from "./session";
+import { clearAccessToken, ensureAuthenticated, redirectToSignin } from "./session";
 
 /** Shared by every /admin/* page — 401 means not signed in at all, 403 means signed in but not an admin. */
 export function handleAdminError(err: unknown, errorEl: HTMLElement): void {
@@ -17,8 +17,8 @@ export function handleAdminError(err: unknown, errorEl: HTMLElement): void {
   errorEl.hidden = false;
 }
 
-export function requireSignedIn(): boolean {
-  if (!isAuthenticated()) {
+export async function requireSignedIn(): Promise<boolean> {
+  if (!(await ensureAuthenticated())) {
     redirectToSignin();
     return false;
   }

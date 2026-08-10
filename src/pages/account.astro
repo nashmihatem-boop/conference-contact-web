@@ -133,7 +133,7 @@ import Footer from "../components/Footer.astro";
 
 <script>
   import { authFetch, ApiError } from "../lib/api";
-  import { clearAccessToken, isAuthenticated, redirectToSignin } from "../lib/session";
+  import { clearAccessToken, ensureAuthenticated, redirectToSignin } from "../lib/session";
 
   interface SubscriptionStatus {
     status: "NONE" | "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED";
@@ -280,7 +280,7 @@ import Footer from "../components/Footer.astro";
     }
   });
 
-  if (!isAuthenticated()) {
+  if (!(await ensureAuthenticated())) {
     redirectToSignin();
   } else {
     if (new URLSearchParams(window.location.search).get("checkout") === "success") {
