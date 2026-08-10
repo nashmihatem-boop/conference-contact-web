@@ -1,0 +1,135 @@
+---
+import LegalPage from "../components/LegalPage.astro";
+---
+
+<LegalPage
+  title="Do Not Sell My Info"
+  updated="August 7, 2026"
+  description="How to opt out of the disclosure of your personal information under CCPA/CPRA and other applicable privacy laws."
+>
+  <p>
+    <em
+      >This is a placeholder draft for a pre-launch product and has not been
+      reviewed by a lawyer. Before publishing, this page requires legal
+      review to confirm whether conference.contact's disclosure of business
+      contact information to paying subscribers constitutes a "sale" or
+      "share" of personal information under the CCPA/CPRA, and to confirm the
+      opt-out mechanism below satisfies that determination.</em
+    >
+  </p>
+
+  <h2>Your right to opt out</h2>
+  <p>
+    Under the California Consumer Privacy Act (CCPA), California residents
+    have the right to opt out of the sale or sharing of their personal
+    information.
+  </p>
+  <p>
+    conference.contact discloses business contact information — which may
+    include your name, title, company, email, and phone number — to paying
+    subscribers as part of our directory service. If you would rather your
+    information not be disclosed to subscribers in this way, or if you want a
+    business contact record about you corrected or removed from our
+    directory entirely, you can submit a request below.
+  </p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li>Identifiers — name, email address, IP address</li>
+    <li>Account and subscription information</li>
+    <li>Usage data — pages visited, browser type</li>
+    <li>
+      Business contact information compiled from publicly available sources
+      into directory profiles
+    </li>
+  </ul>
+
+  <h2>Submit a request</h2>
+  <p>
+    Fill out the form below with your name and the email address associated
+    with your request. We will verify your identity before processing
+    certain requests (such as correction or removal) to protect against
+    fraudulent or unauthorized submissions. We'll respond within 45 days; if
+    we need more time, we'll notify you and may extend this by up to an
+    additional 45 days as permitted by law.
+  </p>
+
+  <form class="not-prose mt-6 flex flex-col gap-4 rounded-2xl border border-line bg-bg-soft p-6" data-static="true">
+    <div>
+      <label for="dns-name" class="mb-1.5 block text-[13px] font-semibold text-ink">Full name</label>
+      <input
+        id="dns-name"
+        type="text"
+        required
+        placeholder="Jane Smith"
+        class="w-full rounded-xl border-2 border-line bg-white px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+      />
+    </div>
+
+    <div>
+      <label for="dns-email" class="mb-1.5 block text-[13px] font-semibold text-ink">Email address</label>
+      <input
+        id="dns-email"
+        type="email"
+        required
+        placeholder="jane@company.com"
+        class="w-full rounded-xl border-2 border-line bg-white px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+      />
+    </div>
+
+    <div>
+      <label for="dns-reason" class="mb-1.5 block text-[13px] font-semibold text-ink">Request type</label>
+      <select
+        id="dns-reason"
+        class="w-full rounded-xl border-2 border-line bg-white px-4 py-3 text-[14px] text-ink focus:border-navy focus:outline-none"
+      >
+        <option>Opt out of sale/sharing of personal information</option>
+        <option>Correct a directory record about me</option>
+        <option>Remove a directory record about me</option>
+        <option>Other privacy request</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="dns-message" class="mb-1.5 block text-[13px] font-semibold text-ink">Details</label>
+      <textarea
+        id="dns-message"
+        rows="4"
+        placeholder="Tell us more…"
+        class="w-full rounded-xl border-2 border-line bg-white px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+      ></textarea>
+    </div>
+
+    <button
+      type="submit"
+      class="mt-1 rounded-xl bg-navy px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-navy-mid"
+    >
+      Submit request
+    </button>
+  </form>
+
+  <p>
+    We also recognize opt-out preference signals, such as the Global Privacy
+    Control (GPC), as a valid method of submitting a request to opt out of
+    sale or sharing, where legally required.
+  </p>
+
+  <h2>No discrimination</h2>
+  <p>
+    We won't discriminate against you for exercising your privacy rights —
+    you won't be charged a different price or denied service for submitting a
+    request.
+  </p>
+
+  <h2>Record retention</h2>
+  <p>
+    We retain records of privacy requests and our responses for the period
+    required by applicable law, for compliance and audit purposes.
+  </p>
+
+  <h2>More information</h2>
+  <p>
+    See our full <a href="/privacy">Privacy Policy</a> for more about the information
+    we collect and your rights.
+  </p>
+</LegalPage>

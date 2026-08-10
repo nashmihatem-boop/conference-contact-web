@@ -1,0 +1,285 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const highlights = [
+  {
+    stat: "21,744",
+    label: "Verified contacts — real name, title, company, and email, hand-checked across 6 company types.",
+  },
+  {
+    stat: "8",
+    label: "Major B2B conferences covered, including Affiliate Summit East/West, Leadscon, and MAU Vegas.",
+  },
+];
+---
+
+<Layout
+  title="Create your account — conference.contact"
+  description="Create a free account to start searching the verified conference contact directory."
+>
+  <div class="grid min-h-screen lg:grid-cols-2">
+    <div class="relative hidden flex-col justify-between overflow-hidden bg-navy p-10 lg:flex">
+      <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+      <a href="/" class="relative flex items-center gap-1.5 text-[14px] text-white/70 transition-colors hover:text-white">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Back to home
+      </a>
+
+      <div class="relative flex flex-col gap-4">
+        {
+          highlights.map((h) => (
+            <figure class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
+              <span class="block font-display text-3xl font-extrabold text-lime">{h.stat}</span>
+              <figcaption class="mt-1.5 text-[13px] leading-relaxed text-white/80">{h.label}</figcaption>
+            </figure>
+          ))
+        }
+      </div>
+
+      <div />
+    </div>
+
+    <div class="flex items-center justify-center px-6 py-16">
+      <div class="w-full max-w-sm">
+        <a href="/" class="inline-flex items-center gap-2 text-lg font-extrabold tracking-tight text-navy">
+          <svg viewBox="0 0 96 96" class="h-7 w-7 shrink-0" aria-hidden="true">
+            <rect width="96" height="96" rx="26" fill="#C3DB42" />
+            <rect x="16" y="26" width="64" height="44" rx="9" fill="#0D1448" />
+            <circle cx="33" cy="44" r="8" fill="#C3DB42" />
+            <path d="M 22 62 a 11 11 0 0 1 22 0 z" fill="#C3DB42" />
+            <rect x="49" y="38" width="23" height="5.5" rx="2.75" fill="#C3DB42" />
+            <rect x="49" y="49" width="16" height="5" rx="2.5" fill="#FFFFFF" opacity="0.85" />
+            <circle cx="72" cy="66" r="13" fill="#C3DB42" />
+            <path d="M 66.5 66 l 4 4 l 7.5 -8.5" stroke="#0D1448" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+          <span>conference<span class="text-lime">.</span>contact</span>
+        </a>
+
+        <h1 id="signup-heading" class="mt-8 font-display text-3xl font-extrabold tracking-tight text-ink">Create your account</h1>
+        <p id="signup-intro" class="mt-2 text-[14px] text-ink-soft">
+          Continue straight to payment — you're subscribing to Full Access ($50 every 6 months, rate locked in).
+          Already have an account? <a href="/signin" class="font-semibold text-navy hover:text-navy-mid">Sign in</a>
+        </p>
+
+        <div id="signup-error" hidden class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+
+        <form id="signup-form" class="mt-7 flex flex-col gap-4">
+          <div>
+            <label for="signup-name" class="mb-1.5 block text-[13px] font-semibold text-ink">Full name</label>
+            <input
+              id="signup-name"
+              name="fullName"
+              type="text"
+              required
+              placeholder="Jane Smith"
+              class="w-full rounded-xl border-2 border-line px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+            />
+          </div>
+          <div>
+            <label for="signup-company" class="mb-1.5 block text-[13px] font-semibold text-ink">Company</label>
+            <input
+              id="signup-company"
+              name="company"
+              type="text"
+              required
+              placeholder="Your company"
+              class="w-full rounded-xl border-2 border-line px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+            />
+          </div>
+          <div>
+            <label for="signup-email" class="mb-1.5 block text-[13px] font-semibold text-ink">Work email</label>
+            <input
+              id="signup-email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@company.com"
+              class="w-full rounded-xl border-2 border-line px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+            />
+          </div>
+          <div>
+            <label for="signup-password" class="mb-1.5 block text-[13px] font-semibold text-ink">Password</label>
+            <input
+              id="signup-password"
+              name="password"
+              type="password"
+              required
+              minlength="8"
+              placeholder="Create a password"
+              class="w-full rounded-xl border-2 border-line px-4 py-3 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+            />
+          </div>
+
+          <button
+            id="signup-submit"
+            type="submit"
+            class="mt-1 rounded-xl bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Continue to payment →
+          </button>
+        </form>
+
+        <p id="signup-legal" class="mt-5 text-center text-[12px] leading-relaxed text-ink-faint">
+          By creating an account, you agree to our <a href="/terms" class="font-semibold text-navy hover:text-navy-mid">Terms of Service</a> and <a
+            href="/privacy"
+            class="font-semibold text-navy hover:text-navy-mid">Privacy Policy</a
+          >.
+        </p>
+
+        <form id="code-form" hidden class="mt-7 flex flex-col gap-4">
+          <p id="code-instructions" class="text-[13px] leading-relaxed text-ink-soft">
+            We don't recognize this device — enter the code we emailed you to continue.
+          </p>
+          <div>
+            <label for="code-input" class="mb-1.5 block text-[13px] font-semibold text-ink">Verification code</label>
+            <input
+              id="code-input"
+              name="code"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              required
+              minlength="6"
+              maxlength="6"
+              placeholder="123456"
+              class="w-full rounded-xl border-2 border-line px-4 py-3 text-center text-[20px] tracking-[0.3em] text-ink placeholder:tracking-normal placeholder:text-ink-faint focus:border-navy focus:outline-none"
+            />
+          </div>
+          <button
+            id="code-submit"
+            type="submit"
+            class="mt-1 rounded-xl bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Continue to payment →
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { apiFetch, authFetch, ApiError } from "../lib/api";
+  import { saveAccessToken } from "../lib/session";
+
+  interface LoginResponse {
+    requiresVerification: boolean;
+    accessToken?: string;
+    method?: "EMAIL_CODE" | "TOTP";
+    challengeToken?: string;
+  }
+
+  const form = document.querySelector<HTMLFormElement>("#signup-form")!;
+  const submitButton = document.querySelector<HTMLButtonElement>("#signup-submit")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#signup-error")!;
+  const heading = document.querySelector<HTMLHeadingElement>("#signup-heading")!;
+  const intro = document.querySelector<HTMLParagraphElement>("#signup-intro")!;
+  const legal = document.querySelector<HTMLParagraphElement>("#signup-legal")!;
+
+  const codeForm = document.querySelector<HTMLFormElement>("#code-form")!;
+  const codeInstructions = document.querySelector<HTMLParagraphElement>("#code-instructions")!;
+  const codeSubmit = document.querySelector<HTMLButtonElement>("#code-submit")!;
+
+  let pendingChallengeToken: string | null = null;
+
+  function showError(message: string) {
+    errorBanner.textContent = message;
+    errorBanner.hidden = false;
+  }
+
+  /** Registering doesn't return a token — this immediately logs in with the same credentials so signup leads straight into payment, not a separate "verify your email first" step. */
+  async function loginAndGoToCheckout(email: string, password: string) {
+    const result = await apiFetch<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!result.requiresVerification && result.accessToken) {
+      saveAccessToken(result.accessToken);
+      await goToCheckout();
+      return;
+    }
+
+    if (result.requiresVerification && result.method && result.challengeToken) {
+      pendingChallengeToken = result.challengeToken;
+      codeInstructions.textContent =
+        result.method === "TOTP"
+          ? "Enter the 6-digit code from your authenticator app."
+          : "We don't recognize this device — enter the code we emailed you to continue.";
+      form.hidden = true;
+      heading.hidden = true;
+      intro.hidden = true;
+      legal.hidden = true;
+      codeForm.hidden = false;
+    }
+  }
+
+  async function goToCheckout() {
+    const { url } = await authFetch<{ url: string }>("/subscriptions/checkout", {
+      method: "POST",
+      body: JSON.stringify({ planSlug: "full-access" }),
+    });
+    window.location.href = url;
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorBanner.hidden = true;
+    submitButton.disabled = true;
+    submitButton.textContent = "Creating account…";
+
+    const data = new FormData(form);
+    const email = String(data.get("email"));
+    const password = String(data.get("password"));
+    // "company" isn't a field the API accepts (RegisterDto has no such
+    // property, and the API rejects unknown fields outright) — collected
+    // for now, not sent, until there's somewhere for it to actually go.
+    try {
+      await apiFetch<{ message: string }>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          fullName: data.get("fullName"),
+          email,
+          password,
+          acceptedTerms: true,
+        }),
+      });
+
+      submitButton.textContent = "Signing in…";
+      await loginAndGoToCheckout(email, password);
+    } catch (err) {
+      errorBanner.textContent =
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+      errorBanner.hidden = false;
+      submitButton.disabled = false;
+      submitButton.textContent = "Continue to payment →";
+    }
+  });
+
+  codeForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorBanner.hidden = true;
+    if (!pendingChallengeToken) return;
+    codeSubmit.disabled = true;
+    codeSubmit.textContent = "Verifying…";
+
+    const data = new FormData(codeForm);
+    try {
+      const result = await apiFetch<{ accessToken: string }>("/auth/login/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: pendingChallengeToken,
+          code: data.get("code"),
+        }),
+      });
+      saveAccessToken(result.accessToken);
+      await goToCheckout();
+    } catch (err) {
+      showError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      codeSubmit.disabled = false;
+      codeSubmit.textContent = "Continue to payment →";
+    }
+  });
+</script>

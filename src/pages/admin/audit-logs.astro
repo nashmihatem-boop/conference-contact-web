@@ -1,0 +1,174 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Audit Logs — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Audit Logs</h1>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="mt-6 flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 sm:flex-row sm:items-center">
+        <div class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-white px-3 py-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-ink-faint">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            id="action-input"
+            type="text"
+            autocomplete="off"
+            placeholder='Filter by action, e.g. "auth." or "admin."'
+            class="w-full text-[14px] text-ink placeholder:text-ink-faint focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[820px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">Time</th>
+              <th class="px-4 py-3 font-semibold">Actor</th>
+              <th class="px-4 py-3 font-semibold">Action</th>
+              <th class="px-4 py-3 font-semibold">Target</th>
+              <th class="px-4 py-3 font-semibold">IP</th>
+              <th class="px-4 py-3 font-semibold">Metadata</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { escapeHtml, formatDateTime, handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface AuditLog {
+    id: string;
+    actorUserId: string | null;
+    action: string;
+    targetType: string | null;
+    targetId: string | null;
+    metadata: unknown;
+    ipAddress: string | null;
+    createdAt: string;
+  }
+  interface LogsPage {
+    data: AuditLog[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const actionInput = document.querySelector<HTMLInputElement>("#action-input")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+
+  let currentPage = 1;
+  let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+
+  function rowHtml(log: AuditLog, index: number): string {
+    const metadataJson = log.metadata ? JSON.stringify(log.metadata) : null;
+    const metadataId = `metadata-${index}`;
+    return `
+      <tr class="border-b border-line last:border-b-0 align-top">
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDateTime(log.createdAt)}</td>
+        <td class="px-4 py-3 text-[12px] text-ink-faint">${log.actorUserId ? escapeHtml(log.actorUserId.slice(0, 8)) : "System"}</td>
+        <td class="px-4 py-3 text-[13px] font-medium text-ink">${escapeHtml(log.action)}</td>
+        <td class="px-4 py-3 text-[12px] text-ink-faint">${log.targetType ? `${escapeHtml(log.targetType)} · ${escapeHtml((log.targetId ?? "").slice(0, 8))}` : "—"}</td>
+        <td class="px-4 py-3 text-[12px] text-ink-faint">${log.ipAddress ? escapeHtml(log.ipAddress) : "—"}</td>
+        <td class="px-4 py-3 text-[12px]">
+          ${
+            metadataJson
+              ? `<button type="button" data-toggle="${metadataId}" class="font-medium text-navy hover:text-navy-mid">View</button>
+                 <pre id="${metadataId}" hidden class="mt-1 max-w-xs overflow-x-auto rounded-lg bg-bg-soft p-2 text-[11px] text-ink-soft">${escapeHtml(JSON.stringify(log.metadata, null, 2))}</pre>`
+              : `<span class="text-ink-faint">—</span>`
+          }
+        </td>
+      </tr>`;
+  }
+
+  function renderRows(logs: AuditLog[]): void {
+    if (logs.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-[13px] text-ink-faint">No audit log entries match this filter.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = logs.map((log, i) => rowHtml(log, i)).join("");
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-toggle]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const pre = document.getElementById(button.dataset.toggle!);
+        if (pre) pre.hidden = !pre.hidden;
+      });
+    });
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = new URLSearchParams();
+    if (actionInput.value.trim()) params.set("action", actionInput.value.trim());
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<LogsPage>(`/admin/audit-logs?${params.toString()}`);
+      renderRows(result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} entr${result.total === 1 ? "y" : "ies"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  actionInput.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => loadPage(1), 350);
+  });
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

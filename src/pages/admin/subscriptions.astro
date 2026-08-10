@@ -1,0 +1,221 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Subscriptions — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Subscriptions</h1>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="mt-6 flex gap-1 rounded-full border border-line bg-white p-1 w-fit">
+        <button id="tab-directory" type="button" data-product="directory" class="rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors">
+          Directory
+        </button>
+        <button id="tab-lead-finder" type="button" data-product="lead-finder" class="rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors">
+          Lead Finder
+        </button>
+      </div>
+
+      <div class="mt-3 flex items-center gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3">
+        <select id="status-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+          <option value="">Status: All</option>
+          <option value="TRIALING">Trialing</option>
+          <option value="ACTIVE">Active</option>
+          <option value="PAST_DUE">Past due</option>
+          <option value="CANCELED">Canceled</option>
+          <option value="EXPIRED">Expired</option>
+        </select>
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[820px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">User</th>
+              <th id="plan-column-header" class="px-4 py-3 font-semibold">Plan</th>
+              <th class="px-4 py-3 font-semibold">Status</th>
+              <th class="px-4 py-3 font-semibold">Period end</th>
+              <th class="px-4 py-3 font-semibold">Cancels at period end</th>
+              <th class="px-4 py-3 font-semibold">Started</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { escapeHtml, formatDate, handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  type Product = "directory" | "lead-finder";
+
+  interface AdminSubscription {
+    id: string;
+    status: string;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+    createdAt: string;
+    daysPastDue: number | null;
+    hasAccess: boolean;
+    user: { email: string; fullName: string };
+    // Directory rows come back with `plan`, Lead Finder rows with `tier` —
+    // same shape, different key, since they're genuinely different Prisma
+    // relations (Subscription.plan vs LeadFinderSubscription.tier).
+    plan?: { name: string; amountCents: number; currency: string };
+    tier?: { name: string; amountCents: number; currency: string };
+  }
+  interface SubsPage {
+    data: AdminSubscription[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const statusSelect = document.querySelector<HTMLSelectElement>("#status-select")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+  const planColumnHeader = document.querySelector<HTMLTableCellElement>("#plan-column-header")!;
+  const tabButtons = document.querySelectorAll<HTMLButtonElement>("[data-product]");
+
+  let currentPage = 1;
+  let currentProduct: Product = "directory";
+
+  function setActiveTab(product: Product): void {
+    for (const btn of tabButtons) {
+      const active = btn.dataset.product === product;
+      btn.classList.toggle("bg-navy", active);
+      btn.classList.toggle("text-white", active);
+      btn.classList.toggle("text-ink-soft", !active);
+    }
+    planColumnHeader.textContent = product === "directory" ? "Plan" : "Tier";
+  }
+
+  function statusBadge(sub: AdminSubscription): string {
+    const styles: Record<string, string> = {
+      ACTIVE: "bg-lime-tint text-navy",
+      TRIALING: "bg-lime-tint text-navy",
+      PAST_DUE: sub.hasAccess ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600",
+      CANCELED: "bg-bg-soft text-ink-faint",
+      EXPIRED: "bg-bg-soft text-ink-faint",
+    };
+    const badge = `<span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-medium ${styles[sub.status] ?? "bg-bg-soft text-ink-soft"}">${escapeHtml(sub.status)}</span>`;
+    if (sub.status !== "PAST_DUE" || sub.daysPastDue === null) return badge;
+    const note = sub.hasAccess
+      ? `${sub.daysPastDue} day${sub.daysPastDue === 1 ? "" : "s"} past due`
+      : `${sub.daysPastDue} days past due — access cut off`;
+    return `${badge}<p class="mt-1 text-[11px] text-ink-faint">${escapeHtml(note)}</p>`;
+  }
+
+  function money(cents: number, currency: string): string {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
+  }
+
+  function rowHtml(sub: AdminSubscription): string {
+    const planLabel =
+      currentProduct === "directory" && sub.plan
+        ? `${escapeHtml(sub.plan.name)} — ${money(sub.plan.amountCents, sub.plan.currency)} / 6mo`
+        : sub.tier
+          ? `${escapeHtml(sub.tier.name)} — ${money(sub.tier.amountCents, sub.tier.currency)}/mo`
+          : "—";
+    return `
+      <tr class="border-b border-line last:border-b-0">
+        <td class="px-4 py-3">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(sub.user.fullName)}</p>
+          <p class="text-[12px] text-ink-faint">${escapeHtml(sub.user.email)}</p>
+        </td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${planLabel}</td>
+        <td class="px-4 py-3">${statusBadge(sub)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDate(sub.currentPeriodEnd)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${sub.cancelAtPeriodEnd ? "Yes" : "No"}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDate(sub.createdAt)}</td>
+      </tr>`;
+  }
+
+  function renderRows(subs: AdminSubscription[]): void {
+    if (subs.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-[13px] text-ink-faint">No subscriptions match this filter.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = subs.map(rowHtml).join("");
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = new URLSearchParams();
+    if (statusSelect.value) params.set("status", statusSelect.value);
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    const endpoint =
+      currentProduct === "directory" ? "/admin/subscriptions" : "/admin/lead-finder-subscriptions";
+
+    try {
+      const result = await authFetch<SubsPage>(`${endpoint}?${params.toString()}`);
+      renderRows(result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} subscription${result.total === 1 ? "" : "s"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  statusSelect.addEventListener("change", () => loadPage(1));
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+  for (const btn of tabButtons) {
+    btn.addEventListener("click", () => {
+      const product = btn.dataset.product as Product;
+      if (product === currentProduct) return;
+      currentProduct = product;
+      setActiveTab(product);
+      void loadPage(1);
+    });
+  }
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      setActiveTab(currentProduct);
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

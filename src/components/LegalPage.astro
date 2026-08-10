@@ -1,0 +1,66 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "./Nav.astro";
+import Footer from "./Footer.astro";
+
+interface Props {
+  title: string;
+  updated: string;
+  description: string;
+}
+const { title, updated, description } = Astro.props;
+---
+
+<Layout title={`${title} — conference.contact`} description={description}>
+  <Nav />
+  <main class="bg-white px-5 py-16 sm:px-8 sm:py-24">
+    <div class="mx-auto max-w-2xl">
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-navy">Legal</p>
+      <h1 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{title}</h1>
+      <p class="mt-2 text-[13px] text-ink-faint">Last updated {updated}</p>
+
+      <div class="legal-prose mt-10">
+        <slot />
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .legal-prose :global(h2) {
+    margin-top: 2.25rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+  .legal-prose :global(p) {
+    margin-top: 0.75rem;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--color-ink-soft);
+  }
+  .legal-prose :global(ul) {
+    margin-top: 0.75rem;
+    padding-left: 1.25rem;
+    list-style: disc;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--color-ink-soft);
+  }
+  .legal-prose :global(li) {
+    margin-top: 0.35rem;
+  }
+  .legal-prose :global(a) {
+    color: var(--color-navy);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .legal-prose :global(a:hover) {
+    color: var(--color-navy-mid);
+  }
+  .legal-prose :global(strong) {
+    color: var(--color-ink);
+  }
+</style>

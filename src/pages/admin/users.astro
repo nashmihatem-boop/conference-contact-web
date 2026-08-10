@@ -1,0 +1,355 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Users — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Users</h1>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="mt-6 flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 lg:flex-row lg:items-center">
+        <div class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-white px-3 py-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-ink-faint">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            autocomplete="off"
+            placeholder="Search by email or name…"
+            class="w-full text-[14px] text-ink placeholder:text-ink-faint focus:outline-none"
+          />
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="status-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Status: All</option>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
+            <option value="DELETED">Deleted</option>
+          </select>
+          <select id="role-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Role: All</option>
+            <option value="USER">User</option>
+            <option value="PREMIUM">Premium</option>
+            <option value="ADMIN">Admin</option>
+            <option value="SUPER_ADMIN">Super Admin</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[1260px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="fullName" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">User <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="role" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Role <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="status" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Status <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="emailVerifiedAt" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Verified <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="leadFinderCredits" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Credits <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="creditsPurchased" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Purchased <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="lifetimePaidCents" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Lifetime paid <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="lastLoginAt" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Last login <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold"><button type="button" data-sort="createdAt" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Joined <span data-sort-indicator class="text-[10px]"></span></button></th>
+              <th class="px-4 py-3 font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { escapeHtml, formatDate, handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface AdminUser {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+    status: string;
+    emailVerifiedAt: string | null;
+    twoFactorEnabled: boolean;
+    lastLoginAt: string | null;
+    createdAt: string;
+    leadFinderCredits: number;
+    creditsPurchased: number;
+    lifetimePaidCents: number;
+  }
+  interface UsersPage {
+    data: AdminUser[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  type SortKey =
+    | "fullName"
+    | "role"
+    | "status"
+    | "emailVerifiedAt"
+    | "leadFinderCredits"
+    | "creditsPurchased"
+    | "lifetimePaidCents"
+    | "lastLoginAt"
+    | "createdAt";
+
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const searchInput = document.querySelector<HTMLInputElement>("#search-input")!;
+  const statusSelect = document.querySelector<HTMLSelectElement>("#status-select")!;
+  const roleSelect = document.querySelector<HTMLSelectElement>("#role-select")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+
+  let currentPage = 1;
+  let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+  let currentUsers: AdminUser[] = [];
+  let sortKey: SortKey | null = null;
+  let sortDir: "asc" | "desc" = "asc";
+
+  function formatCents(cents: number): string {
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+
+  function sortValue(user: AdminUser, key: SortKey): string | number {
+    switch (key) {
+      case "fullName":
+        return user.fullName.toLowerCase();
+      case "role":
+      case "status":
+        return user[key];
+      case "emailVerifiedAt":
+        return user.emailVerifiedAt ? 1 : 0;
+      case "lastLoginAt":
+        return user.lastLoginAt ? new Date(user.lastLoginAt).getTime() : 0;
+      case "createdAt":
+        return new Date(user.createdAt).getTime();
+      case "leadFinderCredits":
+      case "creditsPurchased":
+      case "lifetimePaidCents":
+        return user[key];
+    }
+  }
+
+  function sortedUsers(): AdminUser[] {
+    if (!sortKey) return currentUsers;
+    const key = sortKey;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...currentUsers].sort((a, b) => {
+      const va = sortValue(a, key);
+      const vb = sortValue(b, key);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }
+
+  function updateSortIndicators(): void {
+    document.querySelectorAll<HTMLButtonElement>("[data-sort]").forEach((btn) => {
+      const indicator = btn.querySelector<HTMLSpanElement>("[data-sort-indicator]")!;
+      indicator.textContent = btn.dataset.sort === sortKey ? (sortDir === "asc" ? "▲" : "▼") : "";
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>("[data-sort]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.sort as SortKey;
+      if (sortKey === key) {
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        sortDir = "asc";
+      }
+      updateSortIndicators();
+      renderRows(sortedUsers());
+    });
+  });
+
+  function currentFilters(): URLSearchParams {
+    const params = new URLSearchParams();
+    if (searchInput.value.trim()) params.set("search", searchInput.value.trim());
+    if (statusSelect.value) params.set("status", statusSelect.value);
+    if (roleSelect.value) params.set("role", roleSelect.value);
+    return params;
+  }
+
+  function roleLabel(role: string): string {
+    return role.charAt(0) + role.slice(1).toLowerCase().replace("_", " ");
+  }
+
+  function statusBadge(status: string): string {
+    const styles: Record<string, string> = {
+      ACTIVE: "bg-lime-tint text-navy",
+      SUSPENDED: "bg-red-50 text-red-600",
+      DELETED: "bg-bg-soft text-ink-faint",
+    };
+    return `<span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-medium ${styles[status] ?? "bg-bg-soft text-ink-soft"}">${escapeHtml(status)}</span>`;
+  }
+
+  function rowHtml(user: AdminUser): string {
+    const actions: string[] = [];
+    if (user.status === "ACTIVE") {
+      actions.push(`<button type="button" data-action="suspend" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-red-600 hover:text-red-700">Suspend</button>`);
+    } else if (user.status === "SUSPENDED") {
+      actions.push(`<button type="button" data-action="reactivate" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-navy hover:text-navy-mid">Reactivate</button>`);
+    }
+    if (user.status === "ACTIVE" && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      actions.push(`<button type="button" data-action="impersonate" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-navy hover:text-navy-mid">View as user</button>`);
+    }
+    actions.push(`<button type="button" data-action="force-logout" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-ink-soft hover:text-ink">Force logout</button>`);
+    if (user.status !== "DELETED") {
+      actions.push(`<button type="button" data-action="send-password-reset" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-navy hover:text-navy-mid">Send password reset</button>`);
+      actions.push(`<button type="button" data-action="delete" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-red-600 hover:text-red-700">Delete account</button>`);
+    }
+
+    return `
+      <tr class="border-b border-line last:border-b-0">
+        <td class="px-4 py-3">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(user.fullName)}</p>
+          <p class="text-[12px] text-ink-faint">${escapeHtml(user.email)}</p>
+        </td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${escapeHtml(roleLabel(user.role))}</td>
+        <td class="px-4 py-3">${statusBadge(user.status)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${user.emailVerifiedAt ? "Yes" : "No"}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${user.leadFinderCredits.toLocaleString()}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${user.creditsPurchased.toLocaleString()}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatCents(user.lifetimePaidCents)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDate(user.lastLoginAt)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDate(user.createdAt)}</td>
+        <td class="min-w-[170px] px-4 py-3"><div class="flex flex-col gap-1.5">${actions.join("")}</div></td>
+      </tr>`;
+  }
+
+  function renderRows(users: AdminUser[]): void {
+    if (users.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="10" class="px-4 py-8 text-center text-[13px] text-ink-faint">No users match these filters.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = users.map(rowHtml).join("");
+
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
+      button.addEventListener("click", () => void handleAction(button));
+    });
+  }
+
+  async function handleAction(button: HTMLButtonElement): Promise<void> {
+    const action = button.dataset.action!;
+    const id = button.dataset.id!;
+
+    const confirmText: Record<string, string> = {
+      suspend: "Suspend this user? They'll be signed out everywhere immediately.",
+      reactivate: "Reactivate this user's account?",
+      "force-logout": "Sign this user out of every device?",
+      delete: "Delete this account? This is not reversible from this screen — the user would need a new signup to come back.",
+      impersonate: "Open a new tab signed in as this user? This is recorded on the audit log.",
+      "send-password-reset": "Send a password reset link to this user's email?",
+    };
+    if (!window.confirm(confirmText[action])) return;
+
+    button.disabled = true;
+    try {
+      if (action === "impersonate") {
+        const { accessToken } = await authFetch<{ accessToken: string; targetEmail: string }>(
+          `/admin/users/${id}/impersonate`,
+          { method: "POST" },
+        );
+        window.open(`/impersonate#token=${accessToken}`, "_blank");
+        return;
+      }
+      if (action === "send-password-reset") {
+        const result = await authFetch<{ message: string }>(`/admin/users/${id}/send-password-reset`, {
+          method: "POST",
+        });
+        window.alert(result.message);
+        return;
+      }
+      if (action === "suspend") {
+        const reason = window.prompt("Reason (optional, recorded on the audit log):") ?? undefined;
+        await authFetch(`/admin/users/${id}/suspend`, {
+          method: "POST",
+          body: JSON.stringify({ reason: reason || undefined }),
+        });
+      } else if (action === "delete") {
+        await authFetch(`/admin/users/${id}`, { method: "DELETE" });
+      } else {
+        await authFetch(`/admin/users/${id}/${action}`, { method: "POST" });
+      }
+      await loadPage(currentPage);
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = currentFilters();
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<UsersPage>(`/admin/users?${params.toString()}`);
+      currentUsers = result.data;
+      renderRows(sortedUsers());
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} user${result.total === 1 ? "" : "s"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => loadPage(1), 350);
+  });
+  statusSelect.addEventListener("change", () => loadPage(1));
+  roleSelect.addEventListener("change", () => loadPage(1));
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

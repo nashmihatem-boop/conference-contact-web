@@ -1,0 +1,28 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Signing you in — conference.contact" noindex>
+  <div class="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-5 text-center">
+    <p id="status-text" class="text-[14px] text-ink-soft">Signing you in…</p>
+  </div>
+</Layout>
+
+<script>
+  import { saveAccessToken } from "../lib/session";
+
+  const statusText = document.querySelector<HTMLParagraphElement>("#status-text")!;
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const token = params.get("token");
+
+  if (token) {
+    saveAccessToken(token);
+    // Strip the token out of the address bar immediately — it should
+    // never sit there as a bookmarkable/copyable URL after this point.
+    history.replaceState(null, "", "/impersonate");
+    window.location.href = "/account";
+  } else {
+    statusText.textContent = "Missing sign-in token — redirecting…";
+    window.location.href = "/signin";
+  }
+</script>

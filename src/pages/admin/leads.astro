@@ -1,0 +1,431 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Leads — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Leads</h1>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <!-- form panel -->
+      <div id="lead-form-panel" hidden class="mb-6 rounded-2xl border border-line bg-white p-6">
+        <h2 id="lead-form-title" class="text-[15px] font-semibold text-ink">Add lead</h2>
+        <form id="lead-form" class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="field-name" class="mb-1.5 block text-[13px] font-semibold text-ink">Name *</label>
+            <input id="field-name" required maxlength="200" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-title" class="mb-1.5 block text-[13px] font-semibold text-ink">Title</label>
+            <input id="field-title" maxlength="200" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-company" class="mb-1.5 block text-[13px] font-semibold text-ink">Company</label>
+            <input id="field-company" maxlength="200" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-company-type" class="mb-1.5 block text-[13px] font-semibold text-ink">Type of company *</label>
+            <select id="field-company-type" required class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none">
+              <option value="ADVERTISER">Advertiser</option>
+              <option value="AD_NETWORK">Ad Network</option>
+              <option value="AFFILIATE">Affiliate</option>
+              <option value="AFFILIATE_NETWORK">Affiliate Network</option>
+              <option value="AGENCY">Agency</option>
+              <option value="SOLUTION_PROVIDER">Solution Provider</option>
+            </select>
+          </div>
+          <div>
+            <label for="field-likely" class="mb-1.5 block text-[13px] font-semibold text-ink">Likely to attend *</label>
+            <input id="field-likely" required maxlength="200" placeholder="e.g. Leadscon 2026" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-email" class="mb-1.5 block text-[13px] font-semibold text-ink">Email</label>
+            <input id="field-email" type="email" maxlength="200" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-phone" class="mb-1.5 block text-[13px] font-semibold text-ink">Phone</label>
+            <input id="field-phone" maxlength="50" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-website" class="mb-1.5 block text-[13px] font-semibold text-ink">Website</label>
+            <input id="field-website" type="url" maxlength="500" placeholder="https://" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div>
+            <label for="field-linkedin" class="mb-1.5 block text-[13px] font-semibold text-ink">LinkedIn</label>
+            <input id="field-linkedin" type="url" maxlength="500" placeholder="https://" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="field-app-link" class="mb-1.5 block text-[13px] font-semibold text-ink">App link</label>
+            <input id="field-app-link" type="url" maxlength="500" placeholder="https://" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
+          </div>
+
+          <div class="flex items-center gap-3 sm:col-span-2">
+            <button id="form-submit" type="submit" class="rounded-xl bg-lime px-5 py-2.5 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60">
+              Save
+            </button>
+            <button id="form-cancel" type="button" class="text-[13px] font-medium text-ink-soft hover:text-ink">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 lg:flex-row lg:items-center">
+        <div class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-white px-3 py-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-ink-faint">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            autocomplete="off"
+            placeholder="Search by name, company, title, email, or event…"
+            class="w-full text-[14px] text-ink placeholder:text-ink-faint focus:outline-none"
+          />
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="event-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Likely to attend: All</option>
+          </select>
+          <select id="type-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Type of company: All</option>
+            <option value="ADVERTISER">Advertiser</option>
+            <option value="AD_NETWORK">Ad Network</option>
+            <option value="AFFILIATE">Affiliate</option>
+            <option value="AFFILIATE_NETWORK">Affiliate Network</option>
+            <option value="AGENCY">Agency</option>
+            <option value="SOLUTION_PROVIDER">Solution Provider</option>
+          </select>
+          <select id="approved-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Status: All</option>
+            <option value="false">Pending review</option>
+            <option value="true">Approved</option>
+          </select>
+        </div>
+        <button
+          id="add-lead-button"
+          type="button"
+          class="whitespace-nowrap rounded-xl bg-navy px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-navy-mid"
+        >
+          + Add lead
+        </button>
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[880px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">Contact</th>
+              <th class="px-4 py-3 font-semibold">Company</th>
+              <th class="px-4 py-3 font-semibold">Contact details</th>
+              <th class="px-4 py-3 font-semibold">Likely to attend</th>
+              <th class="px-4 py-3 font-semibold">Type</th>
+              <th class="px-4 py-3 font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch, ApiError } from "../../lib/api";
+  import { escapeHtml, handleAdminError, requireSignedIn } from "../../lib/admin";
+  import { formatCompanyType } from "../../lib/leads-table";
+
+  interface Lead {
+    id: string;
+    name: string;
+    title: string | null;
+    company: string | null;
+    website: string | null;
+    linkedin: string | null;
+    appLink: string | null;
+    email: string | null;
+    phone: string | null;
+    companyType: string;
+    likelyToAttend: string;
+    approved: boolean;
+    submittedBy: { id: string; email: string; fullName: string } | null;
+  }
+  interface LeadsPage {
+    data: Lead[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const searchInput = document.querySelector<HTMLInputElement>("#search-input")!;
+  const eventSelect = document.querySelector<HTMLSelectElement>("#event-select")!;
+  const typeSelect = document.querySelector<HTMLSelectElement>("#type-select")!;
+  const approvedSelect = document.querySelector<HTMLSelectElement>("#approved-select")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+  const addLeadButton = document.querySelector<HTMLButtonElement>("#add-lead-button")!;
+
+  const formPanel = document.querySelector<HTMLDivElement>("#lead-form-panel")!;
+  const formTitle = document.querySelector<HTMLHeadingElement>("#lead-form-title")!;
+  const form = document.querySelector<HTMLFormElement>("#lead-form")!;
+  const formSubmit = document.querySelector<HTMLButtonElement>("#form-submit")!;
+  const formCancel = document.querySelector<HTMLButtonElement>("#form-cancel")!;
+
+  const fieldName = document.querySelector<HTMLInputElement>("#field-name")!;
+  const fieldTitle = document.querySelector<HTMLInputElement>("#field-title")!;
+  const fieldCompany = document.querySelector<HTMLInputElement>("#field-company")!;
+  const fieldCompanyType = document.querySelector<HTMLSelectElement>("#field-company-type")!;
+  const fieldLikely = document.querySelector<HTMLInputElement>("#field-likely")!;
+  const fieldEmail = document.querySelector<HTMLInputElement>("#field-email")!;
+  const fieldPhone = document.querySelector<HTMLInputElement>("#field-phone")!;
+  const fieldWebsite = document.querySelector<HTMLInputElement>("#field-website")!;
+  const fieldLinkedin = document.querySelector<HTMLInputElement>("#field-linkedin")!;
+  const fieldAppLink = document.querySelector<HTMLInputElement>("#field-app-link")!;
+
+  let currentPage = 1;
+  let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+  let editingId: string | null = null;
+
+  function currentFilters(): URLSearchParams {
+    const params = new URLSearchParams();
+    if (searchInput.value.trim()) params.set("search", searchInput.value.trim());
+    if (eventSelect.value) params.set("likelyToAttend", eventSelect.value);
+    if (typeSelect.value) params.set("companyType", typeSelect.value);
+    if (approvedSelect.value) params.set("approved", approvedSelect.value);
+    return params;
+  }
+
+  function contactCell(lead: Lead): string {
+    const parts: string[] = [];
+    if (lead.email) parts.push(`<a href="mailto:${escapeHtml(lead.email)}" class="block hover:text-navy">✉ ${escapeHtml(lead.email)}</a>`);
+    if (lead.phone) parts.push(`<span>☎ ${escapeHtml(lead.phone)}</span>`);
+    if (lead.linkedin) parts.push(`<a href="${escapeHtml(lead.linkedin)}" target="_blank" rel="noopener noreferrer" class="block text-navy hover:text-navy-mid">LinkedIn ↗</a>`);
+    if (lead.website) parts.push(`<a href="${escapeHtml(lead.website)}" target="_blank" rel="noopener noreferrer" class="block text-navy hover:text-navy-mid">Website ↗</a>`);
+    return parts.length ? `<div class="flex flex-col gap-0.5 text-[12px] text-ink-soft">${parts.join("")}</div>` : `<span class="text-[12px] text-ink-faint">—</span>`;
+  }
+
+  function rowHtml(lead: Lead): string {
+    return `
+      <tr class="border-b border-line last:border-b-0">
+        <td class="px-4 py-3">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(lead.name)}</p>
+          ${lead.title ? `<p class="text-[12px] text-ink-faint">${escapeHtml(lead.title)}</p>` : ""}
+          ${!lead.approved ? `<span class="mt-1 inline-block whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Pending review${lead.submittedBy ? ` · ${escapeHtml(lead.submittedBy.email)}` : ""}</span>` : ""}
+        </td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${lead.company ? escapeHtml(lead.company) : "—"}</td>
+        <td class="px-4 py-3">${contactCell(lead)}</td>
+        <td class="px-4 py-3"><span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">${escapeHtml(lead.likelyToAttend)}</span></td>
+        <td class="px-4 py-3"><span class="whitespace-nowrap rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft">${escapeHtml(formatCompanyType(lead.companyType))}</span></td>
+        <td class="px-4 py-3">
+          <div class="flex flex-col gap-1.5">
+            ${!lead.approved ? `<button type="button" data-approve="${escapeHtml(lead.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Approve</button>` : ""}
+            <button type="button" data-edit="${escapeHtml(lead.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Edit</button>
+            <button type="button" data-delete="${escapeHtml(lead.id)}" class="text-[12px] font-medium text-red-600 hover:text-red-700">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  let currentLeads: Lead[] = [];
+
+  function renderRows(leads: Lead[]): void {
+    currentLeads = leads;
+    if (leads.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-[13px] text-ink-faint">No leads match these filters.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = leads.map(rowHtml).join("");
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-edit]").forEach((button) => {
+      button.addEventListener("click", () => openEditForm(button.dataset.edit!));
+    });
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-delete]").forEach((button) => {
+      button.addEventListener("click", () => void handleDelete(button.dataset.delete!));
+    });
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-approve]").forEach((button) => {
+      button.addEventListener("click", () => void handleApprove(button));
+    });
+  }
+
+  async function handleApprove(button: HTMLButtonElement): Promise<void> {
+    const id = button.dataset.approve!;
+    button.disabled = true;
+    try {
+      await authFetch(`/admin/leads/${id}/approve`, { method: "POST" });
+      await loadPage(currentPage);
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+      button.disabled = false;
+    }
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = currentFilters();
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<LeadsPage>(`/admin/leads?${params.toString()}`);
+      renderRows(result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} lead${result.total === 1 ? "" : "s"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  function resetForm(): void {
+    form.reset();
+    fieldCompanyType.value = "ADVERTISER";
+  }
+
+  function openCreateForm(): void {
+    editingId = null;
+    formTitle.textContent = "Add lead";
+    resetForm();
+    formPanel.hidden = false;
+    formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function openEditForm(id: string): void {
+    const lead = currentLeads.find((l) => l.id === id);
+    if (!lead) return;
+    editingId = id;
+    formTitle.textContent = "Edit lead";
+    fieldName.value = lead.name;
+    fieldTitle.value = lead.title ?? "";
+    fieldCompany.value = lead.company ?? "";
+    fieldCompanyType.value = lead.companyType;
+    fieldLikely.value = lead.likelyToAttend;
+    fieldEmail.value = lead.email ?? "";
+    fieldPhone.value = lead.phone ?? "";
+    fieldWebsite.value = lead.website ?? "";
+    fieldLinkedin.value = lead.linkedin ?? "";
+    fieldAppLink.value = lead.appLink ?? "";
+    formPanel.hidden = false;
+    formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function closeForm(): void {
+    formPanel.hidden = true;
+    editingId = null;
+    resetForm();
+  }
+
+  addLeadButton.addEventListener("click", openCreateForm);
+  formCancel.addEventListener("click", closeForm);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorBanner.hidden = true;
+    formSubmit.disabled = true;
+    formSubmit.textContent = "Saving…";
+
+    const body: Record<string, string | undefined> = {
+      name: fieldName.value.trim(),
+      companyType: fieldCompanyType.value,
+      likelyToAttend: fieldLikely.value.trim(),
+      title: fieldTitle.value.trim() || undefined,
+      company: fieldCompany.value.trim() || undefined,
+      email: fieldEmail.value.trim() || undefined,
+      phone: fieldPhone.value.trim() || undefined,
+      website: fieldWebsite.value.trim() || undefined,
+      linkedin: fieldLinkedin.value.trim() || undefined,
+      appLink: fieldAppLink.value.trim() || undefined,
+    };
+
+    try {
+      if (editingId) {
+        await authFetch(`/admin/leads/${editingId}`, { method: "PATCH", body: JSON.stringify(body) });
+      } else {
+        await authFetch("/admin/leads", { method: "POST", body: JSON.stringify(body) });
+      }
+      closeForm();
+      await loadPage(currentPage);
+    } catch (err) {
+      errorBanner.textContent = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+      errorBanner.hidden = false;
+    } finally {
+      formSubmit.disabled = false;
+      formSubmit.textContent = "Save";
+    }
+  });
+
+  async function handleDelete(id: string): Promise<void> {
+    if (!window.confirm("Delete this lead? This can't be undone.")) return;
+    try {
+      await authFetch(`/admin/leads/${id}`, { method: "DELETE" });
+      await loadPage(currentPage);
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => loadPage(1), 350);
+  });
+  eventSelect.addEventListener("change", () => loadPage(1));
+  typeSelect.addEventListener("change", () => loadPage(1));
+  approvedSelect.addEventListener("change", () => loadPage(1));
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  interface LeadFilters {
+    companyTypes: string[];
+    events: string[];
+  }
+
+  async function loadFilters(): Promise<void> {
+    const filters = await authFetch<LeadFilters>("/admin/leads/filters");
+    for (const event of filters.events) {
+      const option = document.createElement("option");
+      option.value = event;
+      option.textContent = event;
+      eventSelect.appendChild(option);
+    }
+  }
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      await loadFilters();
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

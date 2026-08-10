@@ -1,0 +1,36 @@
+---
+const tabs = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/subscriptions", label: "Subscriptions" },
+  { href: "/admin/billing", label: "Billing" },
+  { href: "/admin/leads", label: "Leads" },
+  { href: "/admin/messages", label: "Messages" },
+  { href: "/admin/audit-logs", label: "Audit Logs" },
+  { href: "/admin/security", label: "Security" },
+];
+const current = Astro.url.pathname.replace(/\/$/, "") || "/";
+---
+
+<div class="border-b border-line bg-white">
+  <div class="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-5 sm:px-8">
+    {
+      tabs.map((tab) => {
+        const isActive = current === tab.href;
+        return (
+          <a
+            href={tab.href}
+            class:list={[
+              "whitespace-nowrap border-b-2 px-3 py-3.5 text-[13px] font-medium transition-colors",
+              isActive
+                ? "border-navy text-navy"
+                : "border-transparent text-ink-faint hover:text-ink-soft",
+            ]}
+          >
+            {tab.label}
+          </a>
+        );
+      })
+    }
+  </div>
+</div>

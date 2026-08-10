@@ -1,0 +1,233 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const exampleQueries = [
+  "CMOs at affiliate marketing networks attending Affiliate Summit",
+  "Founders of lead-gen agencies in the US",
+  "VP of Marketing at companies similar to Thumbtack",
+];
+---
+
+<Layout
+  title="AI Lead Finder — conference.contact"
+  description="Describe who you're looking for in plain English — our AI finds and enriches real contacts: email, title, company, LinkedIn. Free, no sign-up required."
+>
+  <div class="flex min-h-screen flex-col">
+  <Nav />
+
+  <section class="relative flex-1 overflow-hidden bg-navy px-5 pt-16 pb-24 sm:px-8 sm:pt-24 sm:pb-32">
+    <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-3xl text-center">
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-lime">AI Lead Finder</p>
+      <h1 class="mt-3 font-display text-[2.25rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl">
+        Find leads that aren't in <span class="text-lime">any directory yet.</span>
+      </h1>
+      <p class="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-white/70">
+        Describe who you're looking for in plain English. AI Lead Finder searches
+        the live web and hands you verified, enriched contacts — name, title,
+        company, email, and LinkedIn.
+      </p>
+
+      <form id="anon-search-form" class="mx-auto mt-8 flex max-w-lg items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-xl shadow-navy-dark/30">
+        <label class="sr-only" for="anon-search-input">Describe who you're looking for</label>
+        <input
+          id="anon-search-input"
+          type="text"
+          placeholder="e.g. Founders of lead-gen agencies in the US"
+          class="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-50"
+        />
+        <button
+          id="anon-search-submit"
+          type="submit"
+          class="shrink-0 rounded-full bg-navy px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-navy-mid disabled:opacity-50"
+        >
+          Search →
+        </button>
+      </form>
+      <p id="anon-search-status" class="mt-3 text-[13px] text-white/50">3 free searches remaining today.</p>
+
+      <div id="anon-example-chips" class="mx-auto mt-5 flex max-w-lg flex-wrap items-center justify-center gap-2">
+        {
+          exampleQueries.map((q) => (
+            <button
+              type="button"
+              data-example-query={q}
+              class="rounded-full border border-white/25 px-3.5 py-1.5 text-[13px] text-white/80 transition-colors hover:border-lime hover:text-lime disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/25 disabled:hover:text-white/80"
+            >
+              "{q}"
+            </button>
+          ))
+        }
+      </div>
+
+      <div id="anon-results" hidden class="mx-auto mt-6 max-w-lg rounded-2xl bg-white p-5 text-left"></div>
+    </div>
+  </section>
+
+  <div id="anon-limit-modal" hidden class="fixed inset-0 z-[100] flex items-center justify-center bg-navy-dark/60 px-5 backdrop-blur-sm">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-[0_30px_80px_-20px_rgba(11,20,84,0.5)]">
+      <h2 class="font-display text-lg font-extrabold tracking-tight text-ink">You've used your 3 free searches today</h2>
+      <p class="mt-2 text-[13px] leading-relaxed text-ink-soft">
+        Sign up to get up to 1,000 enriched leads every month, unlimited database
+        searches, and full CSV export.
+      </p>
+      <div class="mt-5 flex flex-col gap-2">
+        <a href="/signup" class="w-full rounded-full bg-navy py-3 text-center text-[14px] font-semibold text-white transition-colors hover:bg-navy-mid">
+          Get Instant Access
+        </a>
+        <button id="anon-limit-close" type="button" class="w-full rounded-full py-2.5 text-[13px] font-medium text-ink-faint transition-colors hover:text-ink">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+  </div>
+</Layout>
+
+<script>
+  import { apiFetch, ApiError } from "../lib/api";
+
+  interface AnonymousSearchResult {
+    name: string | null;
+    title: string | null;
+    company: string | null;
+    email: string | null;
+    linkedin: string | null;
+  }
+  interface AnonymousSearchResponse {
+    results: AnonymousSearchResult[];
+    searchesRemainingToday: number;
+  }
+  interface AnonymousStatus {
+    maxSearchesPerDay: number;
+    searchesRemainingToday: number;
+  }
+
+  const form = document.querySelector<HTMLFormElement>("#anon-search-form")!;
+  const input = document.querySelector<HTMLInputElement>("#anon-search-input")!;
+  const submitBtn = document.querySelector<HTMLButtonElement>("#anon-search-submit")!;
+  const statusLine = document.querySelector<HTMLParagraphElement>("#anon-search-status")!;
+  const resultsBox = document.querySelector<HTMLDivElement>("#anon-results")!;
+  const limitModal = document.querySelector<HTMLDivElement>("#anon-limit-modal")!;
+  const limitClose = document.querySelector<HTMLButtonElement>("#anon-limit-close")!;
+
+  function escapeHtml(value: string): string {
+    const map: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return value.replace(/[&<>"']/g, (c) => map[c]!);
+  }
+
+  // Tracked so runSearch can gate client-side once exhausted, instead of
+  // round-tripping to the server just to get the same 403 back every time.
+  let searchesExhausted = false;
+
+  function renderStatus(remaining: number): void {
+    searchesExhausted = remaining <= 0;
+    statusLine.textContent = searchesExhausted
+      ? "You've used all your free searches today."
+      : `${remaining} free search${remaining === 1 ? "" : "es"} remaining today.`;
+    input.disabled = searchesExhausted;
+    submitBtn.disabled = searchesExhausted;
+    document
+      .querySelectorAll<HTMLButtonElement>("[data-example-query]")
+      .forEach((chip) => {
+        chip.disabled = searchesExhausted;
+      });
+  }
+
+  async function loadStatus(): Promise<void> {
+    try {
+      const status = await apiFetch<AnonymousStatus>("/leads/ai-search/anonymous/status");
+      renderStatus(status.searchesRemainingToday);
+    } catch {
+      // Non-fatal — the form still works even if the initial count fails to load.
+    }
+  }
+
+  function renderResults(results: AnonymousSearchResult[]): void {
+    if (results.length === 0) {
+      resultsBox.innerHTML = `<p class="text-[14px] text-ink-soft">No matches for that search — try a different description.</p>`;
+      resultsBox.hidden = false;
+      return;
+    }
+    resultsBox.innerHTML = `
+      <p class="text-[12px] font-semibold uppercase tracking-wide text-ink-faint">Real, enriched results</p>
+      <div class="mt-3 flex flex-col gap-3">
+        ${results
+          .map(
+            (r) => `
+          <div class="rounded-xl border border-line p-3.5">
+            <p class="text-[14px] font-semibold text-ink">${escapeHtml(r.name ?? "Unknown")}</p>
+            <p class="text-[12.5px] text-ink-soft">${escapeHtml([r.title, r.company].filter(Boolean).join(" at ") || "—")}</p>
+            <p class="mt-1.5 text-[12.5px] font-medium text-navy">${r.email ? escapeHtml(r.email) : "Email not public"}</p>
+            ${r.linkedin ? `<a href="${escapeHtml(r.linkedin)}" target="_blank" rel="noopener" class="text-[12.5px] font-medium text-navy hover:text-navy-mid">LinkedIn →</a>` : ""}
+          </div>`,
+          )
+          .join("")}
+      </div>`;
+    resultsBox.hidden = false;
+  }
+
+  function showLimitModal(): void {
+    limitModal.hidden = false;
+  }
+  function hideLimitModal(): void {
+    limitModal.hidden = true;
+  }
+  limitClose.addEventListener("click", hideLimitModal);
+  limitModal.addEventListener("click", (event) => {
+    if (event.target === limitModal) hideLimitModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !limitModal.hidden) hideLimitModal();
+  });
+
+  async function runSearch(query: string): Promise<void> {
+    if (searchesExhausted) {
+      showLimitModal();
+      return;
+    }
+    input.value = query;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Searching…";
+    resultsBox.hidden = true;
+    try {
+      const data = await apiFetch<AnonymousSearchResponse>("/leads/ai-search/anonymous", {
+        method: "POST",
+        body: JSON.stringify({ query }),
+      });
+      renderResults(data.results);
+      renderStatus(data.searchesRemainingToday);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 403) {
+        showLimitModal();
+        renderStatus(0);
+      } else {
+        resultsBox.innerHTML = `<p class="text-[14px] text-red-600">${err instanceof ApiError ? escapeHtml(err.message) : "Something went wrong — please try again."}</p>`;
+        resultsBox.hidden = false;
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Search →";
+    }
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = input.value.trim();
+    if (query.length < 3) return;
+    void runSearch(query);
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-example-query]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const query = chip.dataset.exampleQuery ?? "";
+      void runSearch(query);
+    });
+  });
+
+  loadStatus();
+</script>

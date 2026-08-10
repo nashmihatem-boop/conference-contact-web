@@ -1,0 +1,196 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Messages — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Contact messages</h1>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 sm:flex-row sm:items-center">
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="reason-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Reason: All</option>
+            <option value="BILLING">Billing question</option>
+            <option value="ACCOUNT_ISSUE">Account issue</option>
+            <option value="REMOVE_RECORD">Remove my directory record</option>
+            <option value="OTHER">Other</option>
+          </select>
+          <select id="resolved-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="false">Status: Unresolved</option>
+            <option value="">Status: All</option>
+            <option value="true">Status: Resolved</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[820px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">Time</th>
+              <th class="px-4 py-3 font-semibold">From</th>
+              <th class="px-4 py-3 font-semibold">Reason</th>
+              <th class="px-4 py-3 font-semibold">Message</th>
+              <th class="px-4 py-3 font-semibold">Status</th>
+              <th class="px-4 py-3 font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { escapeHtml, formatDateTime, handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface ContactMessage {
+    id: string;
+    name: string;
+    email: string;
+    reason: string;
+    message: string;
+    resolved: boolean;
+    createdAt: string;
+  }
+  interface MessagesPage {
+    data: ContactMessage[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  const REASON_LABELS: Record<string, string> = {
+    BILLING: "Billing question",
+    ACCOUNT_ISSUE: "Account issue",
+    REMOVE_RECORD: "Remove my record",
+    OTHER: "Other",
+  };
+
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const reasonSelect = document.querySelector<HTMLSelectElement>("#reason-select")!;
+  const resolvedSelect = document.querySelector<HTMLSelectElement>("#resolved-select")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+
+  let currentPage = 1;
+
+  function currentFilters(): URLSearchParams {
+    const params = new URLSearchParams();
+    if (reasonSelect.value) params.set("reason", reasonSelect.value);
+    if (resolvedSelect.value) params.set("resolved", resolvedSelect.value);
+    return params;
+  }
+
+  function rowHtml(msg: ContactMessage): string {
+    return `
+      <tr class="border-b border-line last:border-b-0 align-top">
+        <td class="px-4 py-3 text-[13px] text-ink-soft whitespace-nowrap">${formatDateTime(msg.createdAt)}</td>
+        <td class="px-4 py-3">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(msg.name)}</p>
+          <a href="mailto:${escapeHtml(msg.email)}" class="text-[12px] text-navy hover:text-navy-mid">${escapeHtml(msg.email)}</a>
+        </td>
+        <td class="px-4 py-3"><span class="whitespace-nowrap rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft">${escapeHtml(REASON_LABELS[msg.reason] ?? msg.reason)}</span></td>
+        <td class="px-4 py-3 max-w-md text-[13px] text-ink-soft">${escapeHtml(msg.message)}</td>
+        <td class="px-4 py-3">
+          ${
+            msg.resolved
+              ? `<span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[11px] font-medium text-navy">Resolved</span>`
+              : `<span class="whitespace-nowrap rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">Unresolved</span>`
+          }
+        </td>
+        <td class="px-4 py-3">
+          ${!msg.resolved ? `<button type="button" data-resolve="${escapeHtml(msg.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Mark resolved</button>` : `<span class="text-[12px] text-ink-faint">—</span>`}
+        </td>
+      </tr>`;
+  }
+
+  function renderRows(messages: ContactMessage[]): void {
+    if (messages.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-[13px] text-ink-faint">No messages match these filters.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = messages.map(rowHtml).join("");
+    resultsBody.querySelectorAll<HTMLButtonElement>("[data-resolve]").forEach((button) => {
+      button.addEventListener("click", () => void handleResolve(button));
+    });
+  }
+
+  async function handleResolve(button: HTMLButtonElement): Promise<void> {
+    const id = button.dataset.resolve!;
+    button.disabled = true;
+    try {
+      await authFetch(`/admin/contact-messages/${id}/resolve`, { method: "POST" });
+      await loadPage(currentPage);
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+      button.disabled = false;
+    }
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = currentFilters();
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<MessagesPage>(`/admin/contact-messages?${params.toString()}`);
+      renderRows(result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} message${result.total === 1 ? "" : "s"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  reasonSelect.addEventListener("change", () => loadPage(1));
+  resolvedSelect.addEventListener("change", () => loadPage(1));
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

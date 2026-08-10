@@ -1,0 +1,284 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import Wave from "../../components/Wave.astro";
+import Footer from "../../components/Footer.astro";
+---
+
+<Layout title="Billing — conference.contact" noindex>
+  <Nav />
+
+  <div class="relative overflow-hidden bg-navy px-5 pb-16 pt-14 sm:px-8 sm:pt-20">
+    <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-2xl">
+      <a href="/account" class="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/60 transition-colors hover:text-white">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Dashboard
+      </a>
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-lime">Billing</p>
+      <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Manage your plan</h1>
+      <p class="mt-2 text-[14px] text-white/60">Subscription, payment method, and invoices.</p>
+    </div>
+  </div>
+  <Wave before="var(--color-navy)" after="var(--color-bg-soft)" />
+
+  <div class="bg-bg-soft px-5 pt-6 pb-14 sm:px-8 sm:pt-8">
+    <div class="mx-auto max-w-2xl">
+      <div id="billing-loading" class="rounded-2xl bg-white p-8 text-[14px] text-ink-soft shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)]">Loading…</div>
+
+      <div id="billing-error" hidden class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+
+      <div id="billing-content" hidden class="flex flex-col gap-5">
+        <!-- No subscription yet (or a past-due one whose grace period has ended) -->
+        <div id="plan-none" hidden class="relative overflow-hidden rounded-2xl bg-white p-8 shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)]">
+          <div class="absolute inset-x-0 top-0 h-1.5 bg-lime" aria-hidden="true"></div>
+          <div id="past-due-notice" hidden class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-[13px] font-semibold uppercase tracking-wide text-ink-faint">Price locked in</p>
+              <p class="mt-1.5 flex items-baseline gap-1">
+                <span class="font-display text-4xl font-extrabold text-ink">$50</span>
+                <span class="text-[14px] text-ink-soft">/ 6 months</span>
+              </p>
+            </div>
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-lime-tint text-navy" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3 4 6.5v5c0 4.6 3.2 8.7 8 10 4.8-1.3 8-5.4 8-10v-5L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                <path d="m9 12 2 2 4-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
+          <p class="mt-2.5 text-[14px] leading-relaxed text-ink-soft">
+            Unlimited searches, full contact details, a lead finder for up to ~1,000 fresh leads a month, and CSV export.
+          </p>
+          <button
+            id="subscribe-button"
+            type="button"
+            class="mt-5 w-full rounded-full bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark shadow-[0_12px_25px_-10px_rgba(198,224,46,0.7)] transition-all hover:-translate-y-0.5 hover:bg-lime-dark disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+          >
+            Subscribe →
+          </button>
+        </div>
+
+        <!-- Has a subscription — dark "membership card" treatment: this is the one deliberately different surface on the page, reserved for the state that actually means "you have premium access" -->
+        <div id="plan-active" hidden class="relative overflow-hidden rounded-2xl bg-navy p-8 text-white shadow-[0_25px_60px_-25px_rgba(11,20,84,0.6)]">
+          <div class="navy-dots pointer-events-none absolute inset-0 opacity-60" aria-hidden="true"></div>
+          <div class="relative flex items-start justify-between gap-4">
+            <div>
+              <p class="text-[13px] font-semibold uppercase tracking-wide text-white/50">Current plan</p>
+              <p id="plan-name" class="mt-1.5 font-display text-2xl font-extrabold text-white"></p>
+              <p id="plan-status" class="mt-1 text-[13px] text-white/60"></p>
+            </div>
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-lime" aria-hidden="true">
+              <span class="h-3 w-3 rounded-full bg-navy"></span>
+            </span>
+          </div>
+          <div class="relative mt-5 flex flex-col gap-3 sm:flex-row">
+            <button
+              id="portal-button"
+              type="button"
+              class="flex-1 rounded-full bg-lime py-3 text-center text-[14px] font-semibold text-navy-dark transition-all hover:-translate-y-0.5 hover:bg-lime-dark disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Manage billing →
+            </button>
+            <button
+              id="cancel-button"
+              type="button"
+              class="flex-1 rounded-full border-2 border-white/25 py-3 text-center text-[14px] font-semibold text-white transition-colors hover:border-white/50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel subscription
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retention prompt — shown before an actual cancel request goes out -->
+  <div id="cancel-modal" hidden class="fixed inset-0 z-[100] flex items-center justify-center bg-navy-dark/60 px-5 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-[0_30px_80px_-20px_rgba(11,20,84,0.5)]">
+      <span class="grid h-11 w-11 place-items-center rounded-xl bg-red-50 text-red-600" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9v4.5M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <path d="M10.9 3.7 2.9 17.5a1.6 1.6 0 0 0 1.4 2.4h15.4a1.6 1.6 0 0 0 1.4-2.4l-8-13.8a1.6 1.6 0 0 0-2.8 0Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <h2 class="mt-4 font-display text-xl font-extrabold tracking-tight text-ink">Before you cancel</h2>
+      <p class="mt-2 text-[14px] leading-relaxed text-ink-soft">
+        The directory updates continuously — new contacts land right around when each conference opens and closes, which is exactly when leads are most reachable. Once your access ends, you'll lose that window.
+      </p>
+      <p class="mt-3 rounded-xl bg-lime-tint px-4 py-3 text-[13px] leading-relaxed text-navy">
+        One closed lead usually covers a whole $50 renewal many times over — most subscribers only need a single deal to come out ahead.
+      </p>
+      <p class="mt-3 text-[13px] text-ink-faint">Either way, you'll keep full access until the end of your current billing period.</p>
+      <div class="mt-6 flex flex-col gap-2.5">
+        <button id="cancel-modal-keep" type="button" class="w-full rounded-full bg-lime py-3 text-center text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark">
+          Keep my subscription
+        </button>
+        <button id="cancel-modal-confirm" type="button" class="w-full rounded-full py-3 text-center text-[13px] font-medium text-ink-faint transition-colors hover:text-ink">
+          Cancel anyway
+        </button>
+      </div>
+    </div>
+  </div>
+  <Footer />
+</Layout>
+
+<script>
+  import { authFetch, ApiError } from "../../lib/api";
+  import { clearAccessToken, isAuthenticated, redirectToSignin } from "../../lib/session";
+
+  interface SubscriptionStatus {
+    status: "NONE" | "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED";
+    plan?: string;
+    currentPeriodEnd?: string;
+    cancelAtPeriodEnd?: boolean;
+    hasDirectoryAccess: boolean;
+    daysPastDue?: number | null;
+  }
+
+  const loading = document.querySelector<HTMLDivElement>("#billing-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#billing-error")!;
+  const content = document.querySelector<HTMLDivElement>("#billing-content")!;
+  const planNone = document.querySelector<HTMLDivElement>("#plan-none")!;
+  const planActive = document.querySelector<HTMLDivElement>("#plan-active")!;
+  const planName = document.querySelector<HTMLParagraphElement>("#plan-name")!;
+  const planStatus = document.querySelector<HTMLParagraphElement>("#plan-status")!;
+  const pastDueNotice = document.querySelector<HTMLDivElement>("#past-due-notice")!;
+  const subscribeButton = document.querySelector<HTMLButtonElement>("#subscribe-button")!;
+  const portalButton = document.querySelector<HTMLButtonElement>("#portal-button")!;
+  const cancelButton = document.querySelector<HTMLButtonElement>("#cancel-button")!;
+  const cancelModal = document.querySelector<HTMLDivElement>("#cancel-modal")!;
+  const cancelModalKeep = document.querySelector<HTMLButtonElement>("#cancel-modal-keep")!;
+  const cancelModalConfirm = document.querySelector<HTMLButtonElement>("#cancel-modal-confirm")!;
+
+  if (!isAuthenticated()) {
+    redirectToSignin();
+  } else {
+    void loadStatus();
+  }
+
+  async function loadStatus() {
+    try {
+      const status = await authFetch<SubscriptionStatus>("/subscriptions/status");
+      loading.hidden = true;
+      content.hidden = false;
+
+      // A PAST_DUE subscription past its grace period is shown as "please
+      // subscribe again", not as an active plan — matches what
+      // createCheckoutSession now actually allows (it cancels the dead
+      // subscription and lets a fresh one start) rather than showing
+      // billing-management buttons for a plan that no longer works.
+      const showResubscribe =
+        status.status === "NONE" ||
+        status.status === "CANCELED" ||
+        (status.status === "PAST_DUE" && !status.hasDirectoryAccess);
+
+      if (showResubscribe) {
+        planNone.hidden = false;
+        planActive.hidden = true;
+        if (status.status === "PAST_DUE") {
+          const days = status.daysPastDue ?? "several";
+          pastDueNotice.textContent = `Your last payment failed ${days} day${days === 1 ? "" : "s"} ago and access was suspended. Subscribe again to pick up where you left off.`;
+          pastDueNotice.hidden = false;
+        } else {
+          pastDueNotice.hidden = true;
+        }
+      } else {
+        planActive.hidden = false;
+        planNone.hidden = true;
+        planName.textContent = status.plan ?? "Full Access";
+        const periodEnd = status.currentPeriodEnd
+          ? new Date(status.currentPeriodEnd).toLocaleDateString()
+          : null;
+        planStatus.textContent = status.cancelAtPeriodEnd
+          ? `Cancels ${periodEnd ?? "at the end of the current period"}`
+          : status.status === "PAST_DUE" && status.daysPastDue !== null && status.daysPastDue !== undefined
+            ? `Payment failed ${status.daysPastDue} day${status.daysPastDue === 1 ? "" : "s"} ago — update your payment method to keep access`
+            : periodEnd
+              ? `${status.status} — renews ${periodEnd}`
+              : status.status;
+      }
+    } catch (err) {
+      loading.hidden = true;
+      if (err instanceof ApiError && err.statusCode === 401) {
+        clearAccessToken();
+        redirectToSignin();
+        return;
+      }
+      errorBanner.textContent =
+        err instanceof ApiError ? err.message : "Couldn't load your billing details. Please try again.";
+      errorBanner.hidden = false;
+    }
+  }
+
+  subscribeButton.addEventListener("click", async () => {
+    subscribeButton.disabled = true;
+    subscribeButton.textContent = "Redirecting…";
+    try {
+      const { url } = await authFetch<{ url: string }>("/subscriptions/checkout", {
+        method: "POST",
+        body: JSON.stringify({ planSlug: "full-access" }),
+      });
+      window.location.href = url;
+    } catch (err) {
+      errorBanner.textContent =
+        err instanceof ApiError ? err.message : "Couldn't start checkout. Please try again.";
+      errorBanner.hidden = false;
+      subscribeButton.disabled = false;
+      subscribeButton.textContent = "Subscribe →";
+    }
+  });
+
+  portalButton.addEventListener("click", async () => {
+    portalButton.disabled = true;
+    portalButton.textContent = "Redirecting…";
+    try {
+      const { url } = await authFetch<{ url: string }>("/subscriptions/portal", { method: "POST" });
+      window.location.href = url;
+    } catch (err) {
+      errorBanner.textContent =
+        err instanceof ApiError ? err.message : "Couldn't open the billing portal. Please try again.";
+      errorBanner.hidden = false;
+      portalButton.disabled = false;
+      portalButton.textContent = "Manage billing →";
+    }
+  });
+
+  function closeCancelModal(): void {
+    cancelModal.hidden = true;
+  }
+
+  cancelButton.addEventListener("click", () => {
+    cancelModal.hidden = false;
+  });
+
+  cancelModalKeep.addEventListener("click", closeCancelModal);
+
+  cancelModal.addEventListener("click", (event) => {
+    if (event.target === cancelModal) closeCancelModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !cancelModal.hidden) closeCancelModal();
+  });
+
+  cancelModalConfirm.addEventListener("click", async () => {
+    closeCancelModal();
+    cancelButton.disabled = true;
+    cancelButton.textContent = "Cancelling…";
+    try {
+      await authFetch<{ message: string }>("/subscriptions/cancel", { method: "POST" });
+      await loadStatus();
+    } catch (err) {
+      errorBanner.textContent =
+        err instanceof ApiError ? err.message : "Couldn't cancel your subscription. Please try again.";
+      errorBanner.hidden = false;
+    } finally {
+      cancelButton.disabled = false;
+      cancelButton.textContent = "Cancel subscription";
+    }
+  });
+</script>

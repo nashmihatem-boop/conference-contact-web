@@ -1,0 +1,260 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Wave from "../components/Wave.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout title="Conference Attendees Directory — conference.contact" noindex>
+  <Nav />
+
+  <div class="relative overflow-hidden bg-navy px-5 pb-16 pt-14 sm:px-8 sm:pt-20">
+    <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl">
+      <a href="/account" class="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/60 transition-colors hover:text-white">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Back to account
+      </a>
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-lime">Conference Attendees Directory</p>
+      <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Every verified conference contact</h1>
+      <p id="total-count" class="mt-2 max-w-xl text-[14px] text-white/60">Search every verified conference contact across the six categories below.</p>
+    </div>
+  </div>
+  <Wave before="var(--color-navy)" after="var(--color-bg-soft)" />
+
+  <div class="bg-bg-soft px-5 pt-6 pb-16 sm:px-8 sm:pt-8">
+    <div class="mx-auto max-w-6xl">
+    <div id="directory-error" hidden class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+
+    <div id="directory-loading" class="text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="directory-content" hidden>
+      <!-- toolbar -->
+      <div class="mt-6 flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 lg:flex-row lg:items-center">
+        <div class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-white px-3 py-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-ink-faint">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            autocomplete="off"
+            placeholder="Search by name, company, or title…"
+            class="w-full text-[14px] text-ink placeholder:text-ink-faint focus:outline-none"
+          />
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="event-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Tied to event: All</option>
+          </select>
+          <select id="type-select" class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft focus:outline-none">
+            <option value="">Type of company: All</option>
+          </select>
+        </div>
+        <button
+          id="export-button"
+          type="button"
+          class="whitespace-nowrap rounded-xl bg-lime px-5 py-2.5 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Export <span id="export-count">0</span> leads →
+        </button>
+      </div>
+
+      <!-- table -->
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[720px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">Contact</th>
+              <th class="px-4 py-3 font-semibold">Company</th>
+              <th class="px-4 py-3 font-semibold">Contact details</th>
+              <th class="px-4 py-3 font-semibold">Tied to event</th>
+              <th class="px-4 py-3 font-semibold">Type</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <!-- pagination -->
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+    </div>
+  </div>
+  <Footer />
+</Layout>
+
+<script>
+  import { authFetch, ApiError } from "../lib/api";
+  import { clearAccessToken, getAccessToken, isAuthenticated, redirectToSignin } from "../lib/session";
+  import { renderLeadRows, formatCompanyType, type Lead } from "../lib/leads-table";
+
+  interface LeadsPage {
+    data: Lead[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+  interface FiltersResponse {
+    companyTypes: string[];
+    events: string[];
+  }
+
+  const API_URL = import.meta.env.PUBLIC_API_URL;
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#directory-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#directory-error")!;
+  const content = document.querySelector<HTMLDivElement>("#directory-content")!;
+  const totalCountLabel = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const searchInput = document.querySelector<HTMLInputElement>("#search-input")!;
+  const eventSelect = document.querySelector<HTMLSelectElement>("#event-select")!;
+  const typeSelect = document.querySelector<HTMLSelectElement>("#type-select")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+  const exportButton = document.querySelector<HTMLButtonElement>("#export-button")!;
+  const exportCount = document.querySelector<HTMLSpanElement>("#export-count")!;
+
+  let currentPage = 1;
+  let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+  // Set once, from the very first (unfiltered) load — a fixed "how big is
+  // the whole directory" fact, distinct from the export count below, which
+  // tracks whatever the current filters narrow it down to.
+  let overallTotal: number | null = null;
+
+  function currentFilters(): URLSearchParams {
+    const params = new URLSearchParams();
+    if (searchInput.value.trim()) params.set("search", searchInput.value.trim());
+    if (eventSelect.value) params.set("likelyToAttend", eventSelect.value);
+    if (typeSelect.value) params.set("companyType", typeSelect.value);
+    return params;
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = currentFilters();
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<LeadsPage>(`/leads?${params.toString()}`);
+      renderLeadRows(resultsBody, result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      exportCount.textContent = result.total.toLocaleString();
+
+      if (overallTotal === null && params.toString() === new URLSearchParams({ page: "1", pageSize: String(PAGE_SIZE) }).toString()) {
+        overallTotal = result.total;
+      }
+      if (overallTotal !== null) {
+        totalCountLabel.textContent = `${overallTotal.toLocaleString()} verified conference contacts across the six categories below.`;
+      }
+    } catch (err) {
+      handleError(err);
+    }
+  }
+
+  function handleError(err: unknown): void {
+    if (err instanceof ApiError && err.statusCode === 401) {
+      clearAccessToken();
+      redirectToSignin();
+      return;
+    }
+    if (err instanceof ApiError && err.statusCode === 403) {
+      window.location.href = "/account";
+      return;
+    }
+    errorBanner.textContent =
+      err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+    errorBanner.hidden = false;
+  }
+
+  async function loadFilters(): Promise<void> {
+    const filters = await authFetch<FiltersResponse>("/leads/filters");
+    for (const event of filters.events) {
+      const option = document.createElement("option");
+      option.value = event;
+      option.textContent = event;
+      eventSelect.appendChild(option);
+    }
+    for (const type of filters.companyTypes) {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = formatCompanyType(type);
+      typeSelect.appendChild(option);
+    }
+  }
+
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => loadPage(1), 350);
+  });
+  eventSelect.addEventListener("change", () => loadPage(1));
+  typeSelect.addEventListener("change", () => loadPage(1));
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  exportButton.addEventListener("click", async () => {
+    const token = getAccessToken();
+    if (!token) {
+      redirectToSignin();
+      return;
+    }
+    // Disabled state alone (Tailwind's disabled: variant) communicates
+    // "in progress" here — swapping textContent would destroy the nested
+    // #export-count span.
+    exportButton.disabled = true;
+    try {
+      const params = currentFilters();
+      const response = await fetch(`${API_URL}/leads/export?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new ApiError("Export failed. Please try again.", response.status);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "leads.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      exportButton.disabled = false;
+    }
+  });
+
+  async function init(): Promise<void> {
+    if (!isAuthenticated()) {
+      redirectToSignin();
+      return;
+    }
+    try {
+      await loadFilters();
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleError(err);
+    }
+  }
+
+  init();
+</script>

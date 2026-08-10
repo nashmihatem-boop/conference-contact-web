@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/inter/800.css";
+@import "@fontsource/inter/900.css";
+
+@theme {
+  --color-bg: #ffffff;
+  --color-bg-soft: #eeeef0;
+  --color-navy: #0b1454;
+  --color-navy-dark: #070b33;
+  --color-navy-mid: #141d6b;
+  --color-ink: #12152b;
+  --color-ink-soft: #5b5f73;
+  --color-ink-faint: #9395a6;
+  --color-line: #e2e2e7;
+  --color-lime: #c6e02e;
+  --color-lime-dark: #a9c022;
+  --color-lime-tint: #f2f8d9;
+  --color-locked: #d1d5db;
+
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--color-lime);
+  color: var(--color-navy-dark);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 2px;
+}
+
+.blur-cell {
+  filter: blur(3px);
+  user-select: none;
+}
+
+.navy-dots {
+  background-image: radial-gradient(circle, rgba(198, 224, 46, 0.55) 1.6px, transparent 1.8px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.18) 1.6px, transparent 1.8px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+  -webkit-mask-image: radial-gradient(120% 100% at 85% 15%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(120% 100% at 85% 15%, #000 0%, transparent 70%);
+}

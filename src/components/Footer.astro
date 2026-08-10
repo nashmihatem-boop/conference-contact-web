@@ -1,0 +1,79 @@
+---
+const year = new Date().getFullYear();
+const links = [
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#coverage", label: "Coverage" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/#faq", label: "FAQ" },
+];
+const legalLinks = [
+  { href: "/contact", label: "Contact" },
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/do-not-sell", label: "Do Not Sell My Info" },
+];
+---
+
+<footer class="relative bg-navy px-5 pb-10 pt-4 sm:px-8">
+  <div class="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <span class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-white">
+        <svg viewBox="0 0 96 96" class="h-8 w-8 shrink-0" aria-hidden="true">
+          <rect width="96" height="96" rx="26" fill="#C3DB42" />
+          <rect x="16" y="26" width="64" height="44" rx="9" fill="#0D1448" />
+          <circle cx="33" cy="44" r="8" fill="#C3DB42" />
+          <path d="M 22 62 a 11 11 0 0 1 22 0 z" fill="#C3DB42" />
+          <rect x="49" y="38" width="23" height="5.5" rx="2.75" fill="#C3DB42" />
+          <rect x="49" y="49" width="16" height="5" rx="2.5" fill="#FFFFFF" opacity="0.85" />
+          <circle cx="72" cy="66" r="13" fill="#C3DB42" />
+          <path d="M 66.5 66 l 4 4 l 7.5 -8.5" stroke="#0D1448" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+        <span>conference<span class="text-lime">.</span>contact</span>
+      </span>
+      <p class="mt-3 max-w-sm text-[13px] leading-relaxed text-white/60">
+        conference.contact is not affiliated with any conference, organizer,
+        sponsor, or company referenced in the directory. All records are
+        compiled from publicly available sources.
+      </p>
+    </div>
+
+    <ul class="flex flex-wrap gap-x-6 gap-y-2 text-[13px] font-medium text-white/70">
+      {
+        links.map((link) => (
+          <li>
+            <a href={link.href} class="transition-colors hover:text-lime">
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="mx-auto mt-10 flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+      <p class="text-[12px] text-white/40">© {year} conference.contact. All rights reserved.</p>
+      <span class="hidden text-white/20 sm:inline">·</span>
+      <ul class="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-white/40">
+        {
+          legalLinks.map((link) => (
+            <li>
+              <a href={link.href} class="transition-colors hover:text-lime">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <a
+      href="/#top"
+      aria-label="Back to top"
+      class="grid h-9 w-9 place-items-center rounded-full border border-white/25 text-white/70 transition-colors hover:border-lime hover:text-lime"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </a>
+  </div>
+</footer>

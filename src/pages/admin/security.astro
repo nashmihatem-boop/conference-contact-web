@@ -1,0 +1,171 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Security — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Flagged Sessions</h1>
+    <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="mt-6 flex items-center gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3">
+        <label for="min-score-input" class="text-[13px] font-medium text-ink-soft">Min risk score</label>
+        <input
+          id="min-score-input"
+          type="number"
+          min="0"
+          value="1"
+          class="w-24 rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink focus:outline-none"
+        />
+      </div>
+
+      <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+        <table class="w-full min-w-[880px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">User</th>
+              <th class="px-4 py-3 font-semibold">Risk</th>
+              <th class="px-4 py-3 font-semibold">Location</th>
+              <th class="px-4 py-3 font-semibold">Device</th>
+              <th class="px-4 py-3 font-semibold">Created</th>
+              <th class="px-4 py-3 font-semibold">Last activity</th>
+              <th class="px-4 py-3 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-3 text-[13px] text-ink-soft">
+        <button id="prev-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          ← Previous
+        </button>
+        <span id="page-indicator">Page 1</span>
+        <button id="next-page" type="button" class="rounded-lg border border-line px-3 py-1.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:cursor-not-allowed disabled:opacity-40">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { escapeHtml, formatDateTime, handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface FlaggedSession {
+    id: string;
+    ipAddress: string | null;
+    country: string | null;
+    city: string | null;
+    riskScore: number;
+    createdAt: string;
+    lastActivityAt: string;
+    revokedAt: string | null;
+    device: { browserName: string | null; os: string | null; deviceType: string | null; isTrusted: boolean } | null;
+    user: { email: string; fullName: string };
+  }
+  interface SessionsPage {
+    data: FlaggedSession[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  const PAGE_SIZE = 25;
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalCount = document.querySelector<HTMLParagraphElement>("#total-count")!;
+  const minScoreInput = document.querySelector<HTMLInputElement>("#min-score-input")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+  const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
+  const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
+  const pageIndicator = document.querySelector<HTMLSpanElement>("#page-indicator")!;
+
+  let currentPage = 1;
+  let scoreDebounce: ReturnType<typeof setTimeout> | undefined;
+
+  function riskBadge(score: number): string {
+    const style = score >= 70 ? "bg-red-50 text-red-600" : score >= 30 ? "bg-amber-50 text-amber-700" : "bg-bg-soft text-ink-soft";
+    return `<span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-medium ${style}">${score}</span>`;
+  }
+
+  function rowHtml(session: FlaggedSession): string {
+    const location = [session.city, session.country].filter(Boolean).join(", ") || session.ipAddress || "—";
+    const device = session.device
+      ? [session.device.browserName, session.device.os].filter(Boolean).join(" · ") +
+        (session.device.isTrusted ? " (trusted)" : "")
+      : "—";
+    return `
+      <tr class="border-b border-line last:border-b-0">
+        <td class="px-4 py-3">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(session.user.fullName)}</p>
+          <p class="text-[12px] text-ink-faint">${escapeHtml(session.user.email)}</p>
+        </td>
+        <td class="px-4 py-3">${riskBadge(session.riskScore)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${escapeHtml(location)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${escapeHtml(device)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDateTime(session.createdAt)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${formatDateTime(session.lastActivityAt)}</td>
+        <td class="px-4 py-3 text-[13px]">${session.revokedAt ? '<span class="text-ink-faint">Revoked</span>' : '<span class="text-navy">Active</span>'}</td>
+      </tr>`;
+  }
+
+  function renderRows(sessions: FlaggedSession[]): void {
+    if (sessions.length === 0) {
+      resultsBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-[13px] text-ink-faint">No sessions at or above this risk score.</td></tr>`;
+      return;
+    }
+    resultsBody.innerHTML = sessions.map(rowHtml).join("");
+  }
+
+  async function loadPage(page: number): Promise<void> {
+    currentPage = page;
+    const params = new URLSearchParams();
+    params.set("minScore", String(Math.max(0, Number(minScoreInput.value) || 0)));
+    params.set("page", String(page));
+    params.set("pageSize", String(PAGE_SIZE));
+
+    try {
+      const result = await authFetch<SessionsPage>(`/admin/security/sessions?${params.toString()}`);
+      renderRows(result.data);
+      pageIndicator.textContent = `Page ${result.page} of ${Math.max(1, Math.ceil(result.total / PAGE_SIZE))}`;
+      prevButton.disabled = result.page <= 1;
+      nextButton.disabled = result.page * PAGE_SIZE >= result.total;
+      totalCount.textContent = `${result.total.toLocaleString()} session${result.total === 1 ? "" : "s"}.`;
+    } catch (err) {
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  minScoreInput.addEventListener("input", () => {
+    clearTimeout(scoreDebounce);
+    scoreDebounce = setTimeout(() => loadPage(1), 350);
+  });
+  prevButton.addEventListener("click", () => loadPage(currentPage - 1));
+  nextButton.addEventListener("click", () => loadPage(currentPage + 1));
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      await loadPage(1);
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

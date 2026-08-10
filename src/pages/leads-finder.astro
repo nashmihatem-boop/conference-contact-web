@@ -1,0 +1,1892 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Wave from "../components/Wave.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout title="Lead Finder — conference.contact" noindex>
+  <Nav />
+
+  <div class="relative overflow-hidden bg-navy px-5 pb-20 pt-14 sm:px-8 sm:pt-20">
+    <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl">
+      <a href="/account" class="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/60 transition-colors hover:text-white">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Back to account
+      </a>
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-lime">AI Lead Finder</p>
+      <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Who are you looking for?</h1>
+      <p class="mt-2 max-w-xl text-[14px] text-white/60">
+        Describe a role or a company to find similar people — or give a specific person's name to look them up directly. We search the web live and enrich real contact details.
+      </p>
+
+      <div class="mt-6 max-w-sm rounded-xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur-sm">
+        <div class="flex items-center justify-between text-[13px]">
+          <span id="credits-label" class="font-medium text-white">— credits remaining</span>
+          <button
+            id="buy-credits-toggle"
+            type="button"
+            class="flex items-center gap-1 whitespace-nowrap rounded-full bg-white/10 px-2.5 py-1 text-[12px] font-semibold text-lime transition-colors hover:bg-white/20"
+          >
+            + Buy more
+          </button>
+        </div>
+
+        <div id="buy-credits-panel" hidden class="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+          <div class="flex items-center gap-2">
+            <button id="pack-qty-minus" type="button" class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40">−</button>
+            <span id="pack-qty-label" class="min-w-[92px] text-center text-[12px] text-white/80">…</span>
+            <button id="pack-qty-plus" type="button" class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20">+</button>
+          </div>
+          <button
+            id="buy-credits-button"
+            type="button"
+            class="whitespace-nowrap rounded-full bg-lime px-4 py-2 text-[12px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Buy →
+          </button>
+        </div>
+      </div>
+
+      <div id="credits-banner" hidden class="mt-4 max-w-sm rounded-xl border border-lime/30 bg-white/5 px-4 py-2.5 text-[13px] text-lime backdrop-blur-sm"></div>
+      <div id="free-tier-notice" hidden class="mt-4 max-w-sm rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-[13px] text-white/70 backdrop-blur-sm"></div>
+    </div>
+  </div>
+  <Wave before="var(--color-navy)" after="var(--color-bg-soft)" />
+
+  <div class="bg-bg-soft px-5 pt-6 pb-16 sm:px-8 sm:pt-8">
+    <div class="mx-auto max-w-6xl">
+      <div id="page-error" hidden class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+      <div id="page-loading" class="rounded-2xl bg-white p-8 text-[14px] text-ink-soft shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)]">Loading…</div>
+
+      <div id="page-content" hidden>
+        <!-- tabs -->
+        <div class="flex gap-6 border-b border-line text-[14px]">
+          <button
+            id="tab-search"
+            type="button"
+            class="tab-button border-b-2 border-navy px-1 pb-3 font-semibold text-navy"
+          >
+            Search
+          </button>
+          <button
+            id="tab-history"
+            type="button"
+            class="tab-button border-b-2 border-transparent px-1 pb-3 font-medium text-ink-faint transition-colors hover:text-ink-soft"
+          >
+            History
+          </button>
+          <button
+            id="tab-plans"
+            type="button"
+            class="tab-button border-b-2 border-transparent px-1 pb-3 font-medium text-ink-faint transition-colors hover:text-ink-soft"
+          >
+            Plans
+          </button>
+        </div>
+
+        <!-- Search tab -->
+        <div id="panel-search">
+          <!-- Step 1: query -->
+          <div id="step-query" class="mt-6 rounded-2xl bg-white p-6 shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)] sm:p-7">
+            <label for="query-input" class="mb-1.5 block text-[13px] font-semibold text-ink">Who are you looking for?</label>
+            <div class="relative">
+              <span class="pointer-events-none absolute left-4 top-3.5 text-lime" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3.5 13.4 8l4.6 1.4-4.6 1.4L12 15.2l-1.4-4.4L6 9.4l4.6-1.4L12 3.5Z" fill="currentColor" />
+                </svg>
+              </span>
+              <textarea
+                id="query-input"
+                rows="2"
+                placeholder=""
+                class="w-full resize-none rounded-xl border-2 border-line py-3 pl-10 pr-4 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+              ></textarea>
+
+              <div
+                id="suggestions-dropdown"
+                hidden
+                class="absolute left-0 right-0 top-full z-10 mt-2 rounded-xl border border-line bg-white p-2 shadow-[0_20px_40px_-20px_rgba(11,20,84,0.35)]"
+              >
+                <p class="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Search suggestions</p>
+                <div id="suggestions-list"></div>
+              </div>
+            </div>
+
+            <button
+              id="review-button"
+              type="button"
+              class="mt-5 w-full rounded-full bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark shadow-[0_15px_30px_-15px_rgba(11,20,84,0.6)] transition-all hover:-translate-y-0.5 hover:bg-lime-dark disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Review search →
+            </button>
+          </div>
+
+          <!-- Step 2: review parameters -->
+          <div id="step-review" hidden class="mt-6 rounded-2xl bg-white p-6 shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)] sm:p-7">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="font-display text-lg font-extrabold tracking-tight text-ink">Review search parameters</h2>
+              <button id="review-back" type="button" class="shrink-0 text-[13px] font-medium text-navy hover:text-navy-mid">← Edit query</button>
+            </div>
+            <p class="mt-1 text-[13px] text-ink-soft">We pulled these from your query — edit anything before running the real search.</p>
+
+            <div id="review-loading" class="mt-6 flex items-center gap-2.5 text-[13px] text-ink-soft">
+              <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-lime"></span>
+              Reading your query…
+            </div>
+
+            <div id="review-fields" hidden class="mt-6 space-y-5">
+              <div>
+                <label for="field-campaign-name" class="mb-1.5 block text-[13px] font-semibold text-ink">Campaign name</label>
+                <input
+                  id="field-campaign-name"
+                  type="text"
+                  maxlength="200"
+                  class="w-full rounded-xl border-2 border-line px-3.5 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none"
+                />
+              </div>
+
+              <div class="relative">
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Search keywords</label>
+                <div id="field-keywords" class="tag-input flex flex-wrap items-center gap-2 rounded-xl border-2 border-line px-3 py-2">
+                  <input type="text" placeholder="Type and press Enter" class="tag-text-input min-w-[140px] flex-1 py-1 text-[13px] text-ink placeholder:text-ink-faint focus:outline-none" />
+                </div>
+                <div id="field-keywords-suggestions" hidden class="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-line bg-white p-1.5 shadow-[0_20px_40px_-20px_rgba(11,20,84,0.35)]"></div>
+              </div>
+
+              <div class="relative">
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Target industries</label>
+                <div id="field-industries" class="tag-input flex flex-wrap items-center gap-2 rounded-xl border-2 border-line px-3 py-2">
+                  <input type="text" placeholder="Type and press Enter" class="tag-text-input min-w-[140px] flex-1 py-1 text-[13px] text-ink placeholder:text-ink-faint focus:outline-none" />
+                </div>
+                <div id="field-industries-suggestions" hidden class="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-line bg-white p-1.5 shadow-[0_20px_40px_-20px_rgba(11,20,84,0.35)]"></div>
+              </div>
+
+              <div class="relative">
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Target roles</label>
+                <div id="field-roles" class="tag-input flex flex-wrap items-center gap-2 rounded-xl border-2 border-line px-3 py-2">
+                  <input type="text" placeholder="Type and press Enter" class="tag-text-input min-w-[140px] flex-1 py-1 text-[13px] text-ink placeholder:text-ink-faint focus:outline-none" />
+                </div>
+                <div id="field-roles-suggestions" hidden class="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-line bg-white p-1.5 shadow-[0_20px_40px_-20px_rgba(11,20,84,0.35)]"></div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Seniority</label>
+                <div id="field-seniority" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Department / job function</label>
+                <div class="relative">
+                  <button
+                    id="dept-dropdown-toggle"
+                    type="button"
+                    class="flex w-full items-center justify-between rounded-xl border-2 border-line px-3.5 py-2.5 text-left text-[13px] text-ink-soft transition-colors hover:border-navy"
+                  >
+                    <span id="dept-summary">Any department</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </button>
+                  <div
+                    id="dept-dropdown"
+                    hidden
+                    class="absolute left-0 right-0 top-full z-10 mt-2 max-h-72 overflow-y-auto rounded-xl border border-line bg-white p-2 shadow-[0_20px_40px_-20px_rgba(11,20,84,0.35)]"
+                  >
+                    <input
+                      id="dept-search"
+                      type="text"
+                      placeholder="Search departments…"
+                      class="mb-2 w-full rounded-lg border border-line px-3 py-1.5 text-[13px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+                    />
+                    <div id="dept-list"></div>
+                  </div>
+                </div>
+                <p class="mt-1.5 text-[11px] text-ink-faint">Items marked "browse only" don't narrow results yet — pick from the others to filter by function.</p>
+              </div>
+
+              <div>
+                <label for="field-location" class="mb-1.5 block text-[13px] font-semibold text-ink">Location</label>
+                <input
+                  id="field-location"
+                  type="text"
+                  placeholder="e.g. Boston, MA"
+                  class="w-full rounded-xl border-2 border-line px-3.5 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Company size</label>
+                <div id="field-company-size" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Revenue range</label>
+                <div class="flex items-center gap-3">
+                  <input id="field-revenue-min" type="number" min="0" placeholder="Min $" class="w-full rounded-xl border-2 border-line px-3.5 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none" />
+                  <span class="text-ink-faint">–</span>
+                  <input id="field-revenue-max" type="number" min="0" placeholder="Max $" class="w-full rounded-xl border-2 border-line px-3.5 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-[13px] font-semibold text-ink">Exclusions</label>
+                <div id="field-exclusions" class="tag-input flex flex-wrap items-center gap-2 rounded-xl border-2 border-line px-3 py-2">
+                  <input type="text" placeholder="Company keywords to exclude, press Enter" class="tag-text-input min-w-[140px] flex-1 py-1 text-[13px] text-ink placeholder:text-ink-faint focus:outline-none" />
+                </div>
+              </div>
+
+              <button
+                id="run-search-button"
+                type="button"
+                class="w-full rounded-full bg-lime py-3.5 text-center text-[15px] font-semibold text-navy-dark shadow-[0_15px_30px_-15px_rgba(11,20,84,0.6)] transition-all hover:-translate-y-0.5 hover:bg-lime-dark disabled:pointer-events-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Search →
+              </button>
+            </div>
+          </div>
+
+          <!-- results -->
+          <div id="results-section" hidden class="mt-6"></div>
+        </div>
+
+        <!-- History tab -->
+        <div id="panel-history" hidden>
+          <div id="history-list" class="mt-6 divide-y divide-line rounded-2xl border border-line bg-white"></div>
+
+          <div id="history-detail" hidden class="mt-6">
+            <button id="history-back" type="button" class="mb-3 text-[13px] font-medium text-navy hover:text-navy-mid">← Back to history</button>
+            <p id="history-detail-query" class="mb-3 font-display text-lg font-extrabold tracking-tight text-ink"></p>
+            <div id="history-detail-view"></div>
+          </div>
+        </div>
+
+        <!-- Plans tab -->
+        <div id="panel-plans" hidden>
+          <div class="mt-6 rounded-2xl bg-white p-6 shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)] sm:p-7">
+            <h2 class="font-display text-lg font-extrabold tracking-tight text-ink">Lead Finder plans</h2>
+            <p class="mt-1 text-[13px] text-ink-soft">Pick a monthly allowance, then top up with one-time credit packs whenever you need more.</p>
+            <p id="plan-status-line" class="mt-3 text-[13px] font-medium text-navy"></p>
+
+            <div id="plan-error" hidden class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+
+            <div id="plan-cards" class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+            <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-5 text-[13px] text-ink-soft">
+              <span class="inline-flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke="#4d7c0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>Verified, deduplicated leads</span>
+              <span class="inline-flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke="#4d7c0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>Credits top up every cycle</span>
+              <span class="inline-flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke="#4d7c0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>Credits never expire</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="credits-modal"
+    hidden
+    class="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 px-5 backdrop-blur-sm"
+  >
+    <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,20,84,0.5)]">
+      <div class="grid h-11 w-11 place-items-center rounded-full bg-red-50">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L14.71 3.86a2 2 0 0 0-3.42 0Z" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h2 id="credits-modal-heading" class="mt-3 font-display text-lg font-extrabold tracking-tight text-ink">Out of credits</h2>
+      <p id="credits-modal-message" class="mt-1.5 text-[13px] text-ink-soft">You're out of Lead Finder credits. Buy more or upgrade your plan to keep searching.</p>
+      <div class="mt-5 flex flex-col gap-2">
+        <button id="credits-modal-plans" type="button" class="w-full rounded-full bg-navy py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">View plans →</button>
+        <button id="credits-modal-close" type="button" class="w-full rounded-full border-2 border-line py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-faint">Not now</button>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  import { authFetch, ApiError } from "../lib/api";
+  import { clearAccessToken, isAuthenticated, redirectToSignin } from "../lib/session";
+
+  interface SearchResult {
+    id: string;
+    apolloPersonId: string;
+    name: string | null;
+    title: string | null;
+    company: string | null;
+    linkedin: string | null;
+    email: string | null;
+    status: string;
+    reviewStatus: "new" | "approved" | "skipped";
+    createdAt: string;
+  }
+  interface SearchJob {
+    id: string;
+    query: string;
+    jobTitles: string[] | null;
+    status: "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+    createdAt: string;
+    results: SearchResult[];
+  }
+  interface HistoryItem {
+    id: string;
+    query: string;
+    jobTitles: string[] | null;
+    status: string;
+    resultCount: number;
+    createdAt: string;
+  }
+  interface CreditsResponse {
+    credits: number;
+    isPaidTier: boolean;
+    maxResultsPerSearch: number;
+    searchesUsedToday: number;
+    maxSearchesPerDay: number;
+    searchesRemainingToday: number | null;
+  }
+  interface CreditPack {
+    id: string;
+    slug: string;
+    name: string;
+    credits: number;
+    amountCents: number;
+    currency: string;
+  }
+  interface LeadFinderTier {
+    id: string;
+    slug: string;
+    name: string;
+    credits: number;
+    amountCents: number;
+    currency: string;
+    recurring: boolean;
+  }
+  interface LeadFinderStatus {
+    tierSlug: string;
+    status: "NONE" | "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED";
+    currentPeriodEnd?: string;
+    cancelAtPeriodEnd?: boolean;
+  }
+  interface ParsedFilters {
+    campaignName: string;
+    searchKeywords: string[];
+    targetIndustries: string[];
+    personTitles: string[];
+    personSeniorities: string[];
+    location: string;
+    personName: string;
+    personOrganization: string;
+  }
+  interface DepartmentItem {
+    label: string;
+    mapsTo?: string | null;
+  }
+  interface DepartmentSection {
+    section: string;
+    mapsTo: string | null;
+    items: DepartmentItem[];
+  }
+  interface Taxonomy {
+    personSeniorities: string[];
+    companySizeRanges: { label: string; value: string }[];
+    revenueBuckets: { label: string; value: number }[];
+    departments: DepartmentSection[];
+  }
+
+  const SENIORITY_LABELS: Record<string, string> = {
+    owner: "Owner",
+    founder: "Founder",
+    c_suite: "C-Suite",
+    partner: "Partner",
+    vp: "VP",
+    head: "Head",
+    director: "Director",
+    manager: "Manager",
+    senior: "Senior",
+    entry: "Entry",
+    intern: "Intern",
+  };
+
+  const EXAMPLE_QUERIES = [
+    "CMOs at affiliate marketing networks attending Affiliate Summit",
+    "Founders of lead-gen agencies in the US",
+    "VP of Marketing at companies similar to Thumbtack",
+  ];
+
+  // Common real job titles for instant "Target roles" suggestions — no
+  // network round-trip needed, and not limited to whatever happens to be
+  // in our own ~21.7k-row Directory (this covers roles from any industry,
+  // since Apollo search itself isn't limited to our directory either).
+  const COMMON_JOB_TITLES = [
+    "CEO", "CFO", "COO", "CTO", "CMO", "CIO", "CHRO",
+    "Founder", "Co-Founder", "Owner", "Partner", "President", "Vice President",
+    "Managing Director", "General Manager",
+    "Director", "Senior Director", "Sales Director", "Marketing Director",
+    "Engineering Director", "Product Director", "Operations Director",
+    "HR Director", "Creative Director", "Finance Director",
+    "Manager", "Senior Manager", "Project Manager", "Product Manager",
+    "Program Manager", "Sales Manager", "Marketing Manager", "Operations Manager",
+    "Account Manager", "HR Manager", "IT Manager", "Customer Success Manager",
+    "Brand Manager",
+    "Account Executive", "Sales Representative", "Business Development Manager",
+    "BDR", "SDR", "Enterprise Account Executive", "Inside Sales",
+    "Head of Sales", "VP of Sales",
+    "Marketing Coordinator", "Digital Marketing Manager", "Content Manager",
+    "SEO Manager", "Growth Manager", "Demand Generation Manager",
+    "Social Media Manager", "Head of Marketing", "VP of Marketing",
+    "Software Engineer", "Senior Software Engineer", "Full Stack Developer",
+    "Frontend Developer", "Backend Developer", "DevOps Engineer", "Data Engineer",
+    "Engineering Manager", "Solutions Architect", "Technical Lead",
+    "VP of Engineering", "Product Owner",
+    "UX Designer", "UI Designer", "Product Designer",
+    "Head of Product", "VP of Product",
+    "Data Scientist", "Data Analyst", "Business Analyst", "Analytics Manager",
+    "BI Analyst", "Financial Analyst", "Accountant", "Controller",
+    "Finance Manager", "Treasurer",
+    "Recruiter", "Talent Acquisition", "HR Business Partner",
+    "People Operations Manager", "Head of HR",
+    "Consultant", "Executive Assistant", "Office Manager",
+    "Customer Support Manager", "Legal Counsel",
+    "Real Estate Agent", "Broker", "Advisor",
+  ];
+
+  // Standard LinkedIn-style industry taxonomy for instant "Target
+  // industries" suggestions — same reasoning as COMMON_JOB_TITLES: real,
+  // standard category names, not limited to the 6 narrow company types in
+  // our own Directory dataset.
+  const COMMON_INDUSTRIES = [
+    "Information Technology & Services", "Construction", "Marketing & Advertising",
+    "Real Estate", "Health, Wellness & Fitness", "Management Consulting",
+    "Computer Software", "Internet", "Retail", "Financial Services",
+    "Consumer Services", "Hospital & Health Care", "Automotive", "Restaurants",
+    "Education Management", "Food & Beverages", "Design", "Hospitality",
+    "Accounting", "Events Services", "Nonprofit Organization Management",
+    "Entertainment", "Electrical/Electronic Manufacturing",
+    "Leisure, Travel & Tourism", "Professional Training & Coaching",
+    "Transportation/Trucking/Railroad", "Law Practice", "Apparel & Fashion",
+    "Architecture & Planning", "Mechanical or Industrial Engineering",
+    "Insurance", "Telecommunications", "Human Resources", "Staffing & Recruiting",
+    "Sports", "Legal Services", "Oil & Energy", "Media Production", "Machinery",
+    "Wholesale", "Consumer Goods", "Music", "Photography", "Medical Practice",
+    "Cosmetics", "Environmental Services", "Graphic Design",
+    "Business Supplies & Equipment", "Renewables & Environment",
+    "Facilities Services", "Publishing", "Food Production", "Arts & Crafts",
+    "Building Materials", "Civil Engineering", "Religious Institutions",
+    "Public Relations & Communications", "Higher Education", "Printing",
+    "Furniture", "Mining & Metals", "Logistics & Supply Chain", "Research",
+    "Pharmaceuticals", "Individual & Family Services", "Medical Devices",
+    "Civic & Social Organization", "E-Learning", "Security & Investigations",
+    "Chemicals", "Government Administration", "Online Media",
+    "Investment Management", "Farming", "Writing & Editing", "Textiles",
+    "Mental Health Care", "Primary/Secondary Education", "Broadcast Media",
+    "Biotechnology", "Information Services", "International Trade & Development",
+    "Motion Pictures & Film", "Consumer Electronics", "Banking",
+    "Import & Export", "Industrial Automation", "Recreational Facilities & Services",
+    "Performing Arts", "Utilities", "Sporting Goods", "Fine Art",
+    "Airlines/Aviation", "Computer & Network Security", "Maritime",
+    "Luxury Goods & Jewelry", "Veterinary", "Venture Capital & Private Equity",
+    "Wine & Spirits", "Plastics", "Aviation & Aerospace", "Commercial Real Estate",
+    "Computer Games", "Packaging & Containers", "Executive Office",
+    "Computer Hardware", "Computer Networking", "Market Research",
+    "Outsourcing/Offshoring", "Program Development", "Translation & Localization",
+    "Philanthropy", "Public Safety", "Alternative Medicine",
+    "Museums & Institutions", "Warehousing", "Defense & Space", "Newspapers",
+    "Paper & Forest Products", "Law Enforcement", "Investment Banking",
+    "Government Relations", "Fund-Raising", "Think Tanks",
+    "Glass, Ceramics & Concrete", "Capital Markets", "Semiconductors",
+    "Animation", "Political Organization", "Package/Freight Delivery",
+    "Wireless", "International Affairs", "Public Policy", "Libraries",
+    "Gambling & Casinos", "Railroad Manufacture", "Ranching", "Fishery",
+    "Military", "Supermarkets", "Dairy", "Tobacco", "Shipbuilding", "Judiciary",
+    "Alternative Dispute Resolution", "Nanotechnology", "Agriculture",
+    "Legislative Office",
+  ];
+
+  const loading = document.querySelector<HTMLDivElement>("#page-loading")!;
+  const pageError = document.querySelector<HTMLDivElement>("#page-error")!;
+  const creditsModal = document.querySelector<HTMLDivElement>("#credits-modal")!;
+  const creditsModalHeading = document.querySelector<HTMLHeadingElement>("#credits-modal-heading")!;
+  const creditsModalMessage = document.querySelector<HTMLParagraphElement>("#credits-modal-message")!;
+  const creditsModalPlans = document.querySelector<HTMLButtonElement>("#credits-modal-plans")!;
+  const creditsModalClose = document.querySelector<HTMLButtonElement>("#credits-modal-close")!;
+  const content = document.querySelector<HTMLDivElement>("#page-content")!;
+  const creditsLabel = document.querySelector<HTMLSpanElement>("#credits-label")!;
+  const creditsBanner = document.querySelector<HTMLDivElement>("#credits-banner")!;
+  const freeTierNotice = document.querySelector<HTMLDivElement>("#free-tier-notice")!;
+  const buyCreditsToggle = document.querySelector<HTMLButtonElement>("#buy-credits-toggle")!;
+  const buyCreditsPanel = document.querySelector<HTMLDivElement>("#buy-credits-panel")!;
+  const packQtyMinus = document.querySelector<HTMLButtonElement>("#pack-qty-minus")!;
+  const packQtyPlus = document.querySelector<HTMLButtonElement>("#pack-qty-plus")!;
+  const packQtyLabel = document.querySelector<HTMLSpanElement>("#pack-qty-label")!;
+  const buyCreditsButton = document.querySelector<HTMLButtonElement>("#buy-credits-button")!;
+
+  const tabSearch = document.querySelector<HTMLButtonElement>("#tab-search")!;
+  const tabHistory = document.querySelector<HTMLButtonElement>("#tab-history")!;
+  const tabPlans = document.querySelector<HTMLButtonElement>("#tab-plans")!;
+  const panelSearch = document.querySelector<HTMLDivElement>("#panel-search")!;
+  const panelHistory = document.querySelector<HTMLDivElement>("#panel-history")!;
+  const panelPlans = document.querySelector<HTMLDivElement>("#panel-plans")!;
+  const planStatusLine = document.querySelector<HTMLParagraphElement>("#plan-status-line")!;
+  const planError = document.querySelector<HTMLDivElement>("#plan-error")!;
+  const planCards = document.querySelector<HTMLDivElement>("#plan-cards")!;
+
+  const queryInput = document.querySelector<HTMLTextAreaElement>("#query-input")!;
+  const suggestionsDropdown = document.querySelector<HTMLDivElement>("#suggestions-dropdown")!;
+  const suggestionsList = document.querySelector<HTMLDivElement>("#suggestions-list")!;
+  const reviewButton = document.querySelector<HTMLButtonElement>("#review-button")!;
+
+  const stepQuery = document.querySelector<HTMLDivElement>("#step-query")!;
+  const stepReview = document.querySelector<HTMLDivElement>("#step-review")!;
+  const reviewBack = document.querySelector<HTMLButtonElement>("#review-back")!;
+  const reviewLoading = document.querySelector<HTMLDivElement>("#review-loading")!;
+  const reviewFields = document.querySelector<HTMLDivElement>("#review-fields")!;
+
+  const fieldCampaignName = document.querySelector<HTMLInputElement>("#field-campaign-name")!;
+  const fieldKeywords = document.querySelector<HTMLDivElement>("#field-keywords")!;
+  const fieldKeywordsSuggestions = document.querySelector<HTMLDivElement>("#field-keywords-suggestions")!;
+  const fieldIndustries = document.querySelector<HTMLDivElement>("#field-industries")!;
+  const fieldIndustriesSuggestions = document.querySelector<HTMLDivElement>("#field-industries-suggestions")!;
+  const fieldRoles = document.querySelector<HTMLDivElement>("#field-roles")!;
+  const fieldRolesSuggestions = document.querySelector<HTMLDivElement>("#field-roles-suggestions")!;
+  const fieldSeniority = document.querySelector<HTMLDivElement>("#field-seniority")!;
+  const deptDropdownToggle = document.querySelector<HTMLButtonElement>("#dept-dropdown-toggle")!;
+  const deptDropdown = document.querySelector<HTMLDivElement>("#dept-dropdown")!;
+  const deptSummary = document.querySelector<HTMLSpanElement>("#dept-summary")!;
+  const deptSearchInput = document.querySelector<HTMLInputElement>("#dept-search")!;
+  const deptList = document.querySelector<HTMLDivElement>("#dept-list")!;
+  const fieldLocation = document.querySelector<HTMLInputElement>("#field-location")!;
+  const fieldCompanySize = document.querySelector<HTMLDivElement>("#field-company-size")!;
+  const fieldRevenueMin = document.querySelector<HTMLInputElement>("#field-revenue-min")!;
+  const fieldRevenueMax = document.querySelector<HTMLInputElement>("#field-revenue-max")!;
+  const fieldExclusions = document.querySelector<HTMLDivElement>("#field-exclusions")!;
+  const runSearchButton = document.querySelector<HTMLButtonElement>("#run-search-button")!;
+
+  const resultsSection = document.querySelector<HTMLDivElement>("#results-section")!;
+
+  const historyList = document.querySelector<HTMLDivElement>("#history-list")!;
+  const historyDetail = document.querySelector<HTMLDivElement>("#history-detail")!;
+  const historyBack = document.querySelector<HTMLButtonElement>("#history-back")!;
+  const historyDetailQuery = document.querySelector<HTMLParagraphElement>("#history-detail-query")!;
+  const historyDetailView = document.querySelector<HTMLDivElement>("#history-detail-view")!;
+
+  let activeJobId: string | null = null;
+  let pollTimer: ReturnType<typeof setInterval> | undefined;
+  let latestParsed: ParsedFilters | null = null;
+
+  // ── Small shared helpers ────────────────────────────────────────────
+
+  function escapeHtml(value: string): string {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+  function statusBadge(status: string): string {
+    switch (status) {
+      case "enriched":
+        return `<span class="rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">Enriched</span>`;
+      case "pending":
+        return `<span class="inline-flex items-center gap-1.5 rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint"></span>Enriching…</span>`;
+      case "failed":
+        return `<span class="rounded-full bg-red-50 px-2.5 py-1 text-[12px] font-medium text-red-600">Not found</span>`;
+      case "skipped":
+        return `<span class="rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-faint">Skipped</span>`;
+      default:
+        return `<span class="text-ink-faint">—</span>`;
+    }
+  }
+
+  function initials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
+  }
+
+  function reviewBadge(reviewStatus: SearchResult["reviewStatus"]): string {
+    switch (reviewStatus) {
+      case "approved":
+        return `<span class="rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">Approved</span>`;
+      case "skipped":
+        return `<span class="rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-faint">Skipped</span>`;
+      default:
+        return `<span class="rounded-full bg-amber-50 px-2.5 py-1 text-[12px] font-medium text-amber-700">New</span>`;
+    }
+  }
+
+  function statusCellHtml(result: SearchResult): string {
+    return result.status === "enriched" ? reviewBadge(result.reviewStatus) : statusBadge(result.status);
+  }
+
+  function actionCellHtml(result: SearchResult): string {
+    if (result.status !== "enriched") {
+      return `<span class="text-[12px] text-ink-faint">—</span>`;
+    }
+    const isApproved = result.reviewStatus === "approved";
+    const isSkipped = result.reviewStatus === "skipped";
+    const skipBtn = isSkipped
+      ? `<button type="button" disabled class="rounded-full border border-line px-3 py-1 text-[12px] font-medium text-ink-faint">Skipped</button>`
+      : `<button type="button" data-review-action="skipped" data-result-id="${result.id}" class="rounded-full border border-line px-3 py-1 text-[12px] font-medium text-ink transition-colors hover:border-ink-faint">Skip</button>`;
+    const approveBtn = isApproved
+      ? `<button type="button" disabled class="rounded-full bg-lime-tint px-3 py-1 text-[12px] font-semibold text-navy/50">Approved</button>`
+      : `<button type="button" data-review-action="approved" data-result-id="${result.id}" class="rounded-full bg-navy px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-navy-mid">Approve</button>`;
+    return `<div class="flex items-center gap-1.5">${skipBtn}${approveBtn}</div>`;
+  }
+
+  function tableRowHtml(result: SearchResult): string {
+    const nameCell = result.name
+      ? `<div class="flex items-center gap-2.5">
+          <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-lime-tint text-[11px] font-semibold text-navy">${escapeHtml(initials(result.name))}</span>
+          <span>${escapeHtml(result.name)}</span>
+        </div>`
+      : "—";
+    const selectable = result.status === "enriched";
+    return `
+      <tr class="border-b border-line last:border-b-0" data-result-row="${result.id}">
+        <td class="px-4 py-3">${selectable ? `<input type="checkbox" data-select-id="${result.id}" class="row-select h-3.5 w-3.5 rounded border-line" />` : ""}</td>
+        <td class="px-4 py-3 text-[13px] text-ink">${result.company ? escapeHtml(result.company) : "—"}</td>
+        <td class="px-4 py-3 text-[13px] font-medium text-ink">${nameCell}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${result.title ? escapeHtml(result.title) : "—"}</td>
+        <td class="px-4 py-3 text-[13px]">${result.linkedin ? `<a href="${escapeHtml(result.linkedin)}" target="_blank" rel="noopener noreferrer" class="text-navy hover:text-navy-mid">View profile</a>` : "—"}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${result.email ? escapeHtml(result.email) : "—"}</td>
+        <td class="px-4 py-3">${statusCellHtml(result)}</td>
+        <td class="px-4 py-3">${actionCellHtml(result)}</td>
+      </tr>`;
+  }
+
+  function resultCardHtml(result: SearchResult): string {
+    const selectable = result.status === "enriched";
+    return `
+      <div class="rounded-xl border border-line bg-white p-4">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="truncate text-[13px] font-semibold text-ink">${result.name ? escapeHtml(result.name) : "—"}</p>
+            <p class="truncate text-[12px] text-ink-faint">${result.title ? escapeHtml(result.title) : "—"}</p>
+          </div>
+          ${statusCellHtml(result)}
+        </div>
+        <div class="mt-3 rounded-lg bg-bg-soft px-3 py-2 text-[12px] text-ink-soft">
+          <p class="truncate font-medium text-ink">${result.company ? escapeHtml(result.company) : "—"}</p>
+          ${result.linkedin ? `<a href="${escapeHtml(result.linkedin)}" target="_blank" rel="noopener noreferrer" class="mt-1 block truncate text-navy hover:text-navy-mid">LinkedIn ↗</a>` : ""}
+          ${result.email ? `<p class="mt-1 truncate">${escapeHtml(result.email)}</p>` : ""}
+        </div>
+        <div class="mt-3 flex items-center justify-between gap-2">
+          ${selectable ? `<input type="checkbox" data-select-id="${result.id}" class="row-select h-3.5 w-3.5 rounded border-line" />` : "<span></span>"}
+          ${actionCellHtml(result)}
+        </div>
+      </div>`;
+  }
+
+  interface ResultsView {
+    render(
+      jobId: string,
+      results: SearchResult[],
+      canGetMore: boolean,
+      exportFilename: string,
+      onGetMoreStarted: () => void,
+    ): void;
+    updateResults(results: SearchResult[]): void;
+    setGetMoreVisible(visible: boolean): void;
+  }
+
+  function createResultsView(root: HTMLDivElement): ResultsView {
+    root.innerHTML = `
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-1 rounded-full bg-bg-soft p-1">
+          <button type="button" data-filter="all" class="filter-tab rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors">All Contacts (0)</button>
+          <button type="button" data-filter="approved" class="filter-tab rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors">Approved (0)</button>
+          <button type="button" data-filter="skipped" class="filter-tab rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors">Skipped (0)</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-get-more hidden class="whitespace-nowrap rounded-full border-2 border-navy px-3.5 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-navy hover:text-white disabled:cursor-not-allowed disabled:opacity-60">↻ Get 25 more leads</button>
+          <button type="button" data-export hidden class="whitespace-nowrap rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-ink-faint">↓ Export</button>
+          <div class="flex items-center overflow-hidden rounded-lg border border-line">
+            <button type="button" data-view="table" aria-label="Table view" class="view-toggle px-2 py-1.5 transition-colors"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M9 10v10" stroke="currentColor" stroke-width="2"/></svg></button>
+            <button type="button" data-view="grid" aria-label="Grid view" class="view-toggle border-l border-line px-2 py-1.5 transition-colors"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="2"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div data-bulk-bar hidden class="mb-3 flex items-center justify-between rounded-xl bg-navy px-4 py-2.5 text-[13px] text-white">
+        <span data-bulk-count></span>
+        <div class="flex gap-2">
+          <button type="button" data-bulk-approve class="rounded-full bg-lime px-3 py-1 text-[12px] font-semibold text-navy-dark">Approve</button>
+          <button type="button" data-bulk-skip class="rounded-full bg-white/10 px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-white/20">Skip</button>
+        </div>
+      </div>
+      <p data-summary class="mb-2 text-[13px] text-ink-soft"></p>
+      <div data-table-wrap class="overflow-x-auto rounded-2xl border border-line bg-white">
+        <table class="w-full min-w-[1100px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="w-10 px-4 py-3"><input type="checkbox" data-select-all class="h-3.5 w-3.5 rounded border-line" /></th>
+              <th class="px-4 py-3 font-semibold">Company</th>
+              <th class="px-4 py-3 font-semibold">Name</th>
+              <th class="px-4 py-3 font-semibold">Title</th>
+              <th class="px-4 py-3 font-semibold">LinkedIn</th>
+              <th class="px-4 py-3 font-semibold">Email</th>
+              <th class="px-4 py-3 font-semibold">Status</th>
+              <th class="w-[180px] px-4 py-3 font-semibold">Action</th>
+            </tr>
+          </thead>
+          <tbody data-table-body></tbody>
+        </table>
+      </div>
+      <div data-grid-wrap hidden class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+      <div data-get-more-bottom-row hidden class="mt-4 flex justify-center">
+        <button type="button" data-get-more-bottom class="whitespace-nowrap rounded-full border-2 border-navy px-5 py-2.5 text-[13px] font-semibold text-navy transition-colors hover:bg-navy hover:text-white disabled:cursor-not-allowed disabled:opacity-60">↻ Get 25 more leads</button>
+      </div>
+    `;
+
+    const filterTabs = root.querySelectorAll<HTMLButtonElement>("[data-filter]");
+    const getMoreBtn = root.querySelector<HTMLButtonElement>("[data-get-more]")!;
+    const getMoreBottomRow = root.querySelector<HTMLDivElement>("[data-get-more-bottom-row]")!;
+    const getMoreBottomBtn = root.querySelector<HTMLButtonElement>("[data-get-more-bottom]")!;
+    const exportBtn = root.querySelector<HTMLButtonElement>("[data-export]")!;
+    const viewToggles = root.querySelectorAll<HTMLButtonElement>("[data-view]");
+    const bulkBar = root.querySelector<HTMLDivElement>("[data-bulk-bar]")!;
+    const bulkCount = root.querySelector<HTMLSpanElement>("[data-bulk-count]")!;
+    const summary = root.querySelector<HTMLParagraphElement>("[data-summary]")!;
+    const tableWrap = root.querySelector<HTMLDivElement>("[data-table-wrap]")!;
+    const tableBody = root.querySelector<HTMLTableSectionElement>("[data-table-body]")!;
+    const gridWrap = root.querySelector<HTMLDivElement>("[data-grid-wrap]")!;
+    const selectAll = root.querySelector<HTMLInputElement>("[data-select-all]")!;
+
+    let jobId = "";
+    let allResults: SearchResult[] = [];
+    let filter: "all" | "approved" | "skipped" = "all";
+    let viewMode: "table" | "grid" = "table";
+    let selected = new Set<string>();
+    let exportFilename = "lead-finder-results.csv";
+    let onGetMoreStarted: (() => void) | undefined;
+
+    function filteredResults(): SearchResult[] {
+      if (filter === "approved") return allResults.filter((r) => r.reviewStatus === "approved");
+      if (filter === "skipped") return allResults.filter((r) => r.reviewStatus === "skipped");
+      return allResults;
+    }
+
+    function refreshChrome(): void {
+      const total = allResults.length;
+      const approvedCount = allResults.filter((r) => r.reviewStatus === "approved").length;
+      const skippedCount = allResults.filter((r) => r.reviewStatus === "skipped").length;
+      filterTabs.forEach((btn) => {
+        const key = btn.dataset.filter as typeof filter;
+        btn.textContent =
+          key === "all"
+            ? `All Contacts (${total})`
+            : key === "approved"
+              ? `Approved (${approvedCount})`
+              : `Skipped (${skippedCount})`;
+        const active = key === filter;
+        btn.classList.toggle("bg-white", active);
+        btn.classList.toggle("text-navy", active);
+        btn.classList.toggle("shadow-sm", active);
+        btn.classList.toggle("text-ink-soft", !active);
+      });
+      const enrichedCount = allResults.filter((r) => r.status === "enriched").length;
+      const pendingCount = allResults.filter((r) => r.status === "pending").length;
+      const failedCount = allResults.filter((r) => r.status === "failed").length;
+      if (total === 0) {
+        summary.textContent = "";
+      } else if (pendingCount > 0) {
+        summary.textContent = `Finding leads… ${enrichedCount} enriched so far`;
+      } else {
+        summary.textContent = `${enrichedCount} lead${enrichedCount === 1 ? "" : "s"} enriched${failedCount ? `, ${failedCount} not found` : ""}`;
+      }
+      exportBtn.hidden = total === 0;
+      tableWrap.hidden = viewMode !== "table";
+      gridWrap.hidden = viewMode !== "grid";
+      viewToggles.forEach((btn) => {
+        const active = btn.dataset.view === viewMode;
+        btn.classList.toggle("bg-bg-soft", active);
+        btn.classList.toggle("text-navy", active);
+        btn.classList.toggle("text-ink-faint", !active);
+      });
+    }
+
+    function refreshBulkBar(): void {
+      bulkBar.hidden = selected.size === 0;
+      bulkCount.textContent = `${selected.size} selected`;
+    }
+
+    function refreshRows(): void {
+      const rows = filteredResults();
+      if (rows.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-[13px] text-ink-faint">No leads in this view.</td></tr>`;
+        gridWrap.innerHTML = `<p class="col-span-full px-4 py-8 text-center text-[13px] text-ink-faint">No leads in this view.</p>`;
+      } else {
+        tableBody.innerHTML = rows.map(tableRowHtml).join("");
+        gridWrap.innerHTML = rows.map(resultCardHtml).join("");
+      }
+      root.querySelectorAll<HTMLInputElement>(".row-select").forEach((cb) => {
+        cb.checked = selected.has(cb.dataset.selectId!);
+      });
+      refreshBulkBar();
+    }
+
+    filterTabs.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        filter = btn.dataset.filter as typeof filter;
+        selected = new Set();
+        refreshChrome();
+        refreshRows();
+      }),
+    );
+
+    viewToggles.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        viewMode = btn.dataset.view as typeof viewMode;
+        refreshChrome();
+      }),
+    );
+
+    exportBtn.addEventListener("click", () => exportResultsCsv(filteredResults(), exportFilename));
+
+    selectAll.addEventListener("change", () => {
+      const selectableRows = filteredResults().filter((r) => r.status === "enriched");
+      if (selectAll.checked) selectableRows.forEach((r) => selected.add(r.id));
+      else selected.clear();
+      refreshRows();
+    });
+
+    root.addEventListener("change", (event) => {
+      const target = event.target as HTMLElement;
+      if (target.classList.contains("row-select")) {
+        const id = (target as HTMLInputElement).dataset.selectId!;
+        if ((target as HTMLInputElement).checked) selected.add(id);
+        else selected.delete(id);
+        refreshBulkBar();
+      }
+    });
+
+    async function applyReview(resultId: string, reviewStatus: "approved" | "skipped"): Promise<void> {
+      try {
+        await authFetch(`/leads/ai-search/${jobId}/results/${resultId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ reviewStatus }),
+        });
+        const target = allResults.find((r) => r.id === resultId);
+        if (target) target.reviewStatus = reviewStatus;
+        refreshChrome();
+        refreshRows();
+      } catch (err) {
+        handleError(err);
+      }
+    }
+
+    root.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-review-action]");
+      if (button) {
+        void applyReview(button.dataset.resultId!, button.dataset.reviewAction as "approved" | "skipped");
+      }
+    });
+
+    let bulkBusy = false;
+    async function bulkApply(status: "approved" | "skipped"): Promise<void> {
+      if (bulkBusy) return;
+      bulkBusy = true;
+      for (const id of selected) {
+        await applyReview(id, status);
+      }
+      selected = new Set();
+      refreshRows();
+      bulkBusy = false;
+    }
+    root.querySelector<HTMLButtonElement>("[data-bulk-approve]")!.addEventListener("click", () => void bulkApply("approved"));
+    root.querySelector<HTMLButtonElement>("[data-bulk-skip]")!.addEventListener("click", () => void bulkApply("skipped"));
+
+    const getMoreButtons = [getMoreBtn, getMoreBottomBtn];
+
+    function setGetMoreState(visible: boolean, busy = false): void {
+      getMoreBtn.hidden = !visible;
+      getMoreBottomRow.hidden = !visible;
+      for (const btn of getMoreButtons) {
+        btn.disabled = busy;
+        btn.textContent = busy ? "Finding more…" : "↻ Get 25 more leads";
+      }
+    }
+
+    async function handleGetMore(): Promise<void> {
+      setGetMoreState(true, true);
+      try {
+        await authFetch(`/leads/ai-search/${jobId}/more`, { method: "POST", body: JSON.stringify({}) });
+        setGetMoreState(false);
+        onGetMoreStarted?.();
+      } catch (err) {
+        setGetMoreState(true, false);
+        handleError(err);
+      }
+    }
+
+    for (const btn of getMoreButtons) {
+      btn.addEventListener("click", () => void handleGetMore());
+    }
+
+    return {
+      render(newJobId, results, canGetMore, filename, onGetMore) {
+        jobId = newJobId;
+        allResults = results;
+        filter = "all";
+        selected = new Set();
+        exportFilename = filename;
+        setGetMoreState(canGetMore, false);
+        onGetMoreStarted = onGetMore;
+        refreshChrome();
+        refreshRows();
+      },
+      updateResults(results) {
+        allResults = results;
+        refreshChrome();
+        refreshRows();
+      },
+      setGetMoreVisible(visible) {
+        setGetMoreState(visible, false);
+      },
+    };
+  }
+
+  const searchResultsView = createResultsView(resultsSection);
+  const historyResultsView = createResultsView(historyDetailView);
+
+  function csvField(value: string): string {
+    return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+  }
+
+  function slugifyFilename(value: string): string {
+    const slug = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    return slug || "lead-finder-results";
+  }
+
+  function exportResultsCsv(results: SearchResult[], filename = "lead-finder-results.csv"): void {
+    const header = ["Company", "Name", "Title", "LinkedIn", "Email", "Status"];
+    const rows = results.map((r) => [
+      r.company ?? "",
+      r.name ?? "",
+      r.title ?? "",
+      r.linkedin ?? "",
+      r.email ?? "",
+      r.status,
+    ]);
+    const csv = [header, ...rows].map((row) => row.map(csvField).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function updateCredits(credits: CreditsResponse): void {
+    creditsLabel.textContent = `${credits.credits.toLocaleString()} credit${credits.credits === 1 ? "" : "s"} remaining`;
+
+    if (credits.isPaidTier || credits.searchesRemainingToday === null) {
+      freeTierNotice.hidden = true;
+      return;
+    }
+    const remaining = credits.searchesRemainingToday;
+    freeTierNotice.textContent =
+      remaining <= 0
+        ? `All ${credits.maxSearchesPerDay} free searches used today — upgrade for unlimited searches.`
+        : `${remaining} free search${remaining === 1 ? "" : "es"} remaining today (${credits.maxResultsPerSearch} results each).`;
+    freeTierNotice.hidden = false;
+  }
+
+  // ── Buy credits ──────────────────────────────────────────────────────
+
+  let creditPack: CreditPack | null = null;
+  let packQuantity = 1;
+
+  function formatUsd(cents: number): string {
+    return `$${(cents / 100).toFixed(2).replace(/\.00$/, "")}`;
+  }
+
+  function renderPackQuantity(): void {
+    if (!creditPack) return;
+    packQtyLabel.textContent = `${(creditPack.credits * packQuantity).toLocaleString()} credits`;
+    buyCreditsButton.textContent = `Buy → ${formatUsd(creditPack.amountCents * packQuantity)}`;
+    packQtyMinus.disabled = packQuantity <= 1;
+  }
+
+  buyCreditsToggle.addEventListener("click", () => {
+    buyCreditsPanel.hidden = !buyCreditsPanel.hidden;
+  });
+
+  packQtyMinus.addEventListener("click", () => {
+    if (packQuantity > 1) {
+      packQuantity -= 1;
+      renderPackQuantity();
+    }
+  });
+  packQtyPlus.addEventListener("click", () => {
+    if (packQuantity < 20) {
+      packQuantity += 1;
+      renderPackQuantity();
+    }
+  });
+
+  buyCreditsButton.addEventListener("click", async () => {
+    if (!creditPack) return;
+    buyCreditsButton.disabled = true;
+    buyCreditsButton.textContent = "Redirecting…";
+    try {
+      const { url } = await authFetch<{ url: string }>("/subscriptions/credits/checkout", {
+        method: "POST",
+        body: JSON.stringify({ packSlug: creditPack.slug, quantity: packQuantity }),
+      });
+      window.location.href = url;
+    } catch (err) {
+      handleError(err);
+      buyCreditsButton.disabled = false;
+      renderPackQuantity();
+    }
+  });
+
+  async function loadCreditPack(): Promise<void> {
+    try {
+      const packs = await authFetch<CreditPack[]>("/subscriptions/credit-packs");
+      creditPack = packs[0] ?? null;
+      if (creditPack) renderPackQuantity();
+    } catch {
+      // Non-fatal — the buy-credits panel just won't offer a pack if this fails.
+    }
+  }
+
+  // ── Plans ────────────────────────────────────────────────────────────
+
+  function tierCardHtml(tier: LeadFinderTier, currentSlug: string): string {
+    const isCurrent = tier.slug === currentSlug;
+    const isFree = tier.slug === "free";
+    const isPopular = tier.slug === "growth";
+    const priceHtml = isFree
+      ? `<span class="font-display text-3xl font-extrabold text-ink">Free</span>`
+      : `<span class="font-display text-3xl font-extrabold text-ink">${formatUsd(tier.amountCents)}</span><span class="text-[13px] text-ink-soft">/mo</span>`;
+    const subline = isFree
+      ? `${tier.credits.toLocaleString()} leads, one-time`
+      : `${tier.credits.toLocaleString()} leads / month`;
+    const desc = isFree
+      ? `${tier.credits.toLocaleString()} verified leads to get started`
+      : `${tier.credits.toLocaleString()} leads per month`;
+    const buttonHtml = isCurrent
+      ? `<button type="button" disabled class="mt-4 w-full rounded-full border-2 border-line py-2.5 text-[13px] font-semibold text-ink-faint">Current plan</button>`
+      : `<button type="button" data-upgrade="${escapeHtml(tier.slug)}" class="mt-4 w-full rounded-full bg-navy py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">Upgrade</button>`;
+    return `
+      <div class="relative rounded-2xl border-2 ${isCurrent ? "border-lime" : isPopular ? "border-amber-400" : "border-line"} p-5">
+        ${isPopular ? `<span class="absolute -top-3 right-4 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-navy-dark">Popular</span>` : ""}
+        <p class="text-[13px] font-semibold text-ink-faint">${escapeHtml(tier.name)}</p>
+        <p class="mt-2 flex items-baseline gap-1">${priceHtml}</p>
+        <p class="mt-1 text-[13px] font-medium text-ink">${subline}</p>
+        <p class="mt-1 text-[12px] text-ink-faint">${desc}</p>
+        ${buttonHtml}
+      </div>`;
+  }
+
+  function customCardHtml(): string {
+    return `
+      <div class="rounded-2xl border-2 border-line p-5">
+        <p class="text-[13px] font-semibold text-ink-faint">Custom</p>
+        <p class="mt-2 font-display text-2xl font-extrabold text-ink">Let's talk</p>
+        <p class="mt-1 text-[12px] text-ink-faint">Tailored enterprise volume — high-volume or bespoke lead sourcing, priced to your needs.</p>
+        <a href="/contact" class="mt-4 block w-full rounded-full border-2 border-line py-2.5 text-center text-[13px] font-semibold text-ink transition-colors hover:border-navy">Talk to sales</a>
+      </div>`;
+  }
+
+  function renderPlanStatusLine(status: LeadFinderStatus, tiers: LeadFinderTier[]): void {
+    const tierName = tiers.find((t) => t.slug === status.tierSlug)?.name ?? "Free";
+    if (status.status === "NONE") {
+      planStatusLine.textContent = "You're on the Free plan.";
+      return;
+    }
+    const periodEnd = status.currentPeriodEnd
+      ? new Date(status.currentPeriodEnd).toLocaleDateString()
+      : null;
+    if (status.cancelAtPeriodEnd) {
+      planStatusLine.textContent = `You're on ${tierName} — cancels ${periodEnd ?? "at the end of this period"}.`;
+    } else {
+      planStatusLine.textContent = periodEnd
+        ? `You're on ${tierName} — renews ${periodEnd}.`
+        : `You're on ${tierName}.`;
+    }
+  }
+
+  async function handleUpgrade(button: HTMLButtonElement): Promise<void> {
+    const tierSlug = button.dataset.upgrade!;
+    button.disabled = true;
+    button.textContent = "Redirecting…";
+    try {
+      const { url } = await authFetch<{ url: string }>("/lead-finder/checkout", {
+        method: "POST",
+        body: JSON.stringify({ tierSlug }),
+      });
+      window.location.href = url;
+    } catch (err) {
+      handleError(err);
+      button.disabled = false;
+      button.textContent = "Upgrade";
+    }
+  }
+
+  async function loadPlans(): Promise<void> {
+    planError.hidden = true;
+    try {
+      const [tiers, status] = await Promise.all([
+        authFetch<LeadFinderTier[]>("/lead-finder/tiers"),
+        authFetch<LeadFinderStatus>("/lead-finder/status"),
+      ]);
+      planCards.innerHTML =
+        tiers.map((tier) => tierCardHtml(tier, status.tierSlug)).join("") + customCardHtml();
+      planCards.querySelectorAll<HTMLButtonElement>("[data-upgrade]").forEach((button) => {
+        button.addEventListener("click", () => void handleUpgrade(button));
+      });
+      renderPlanStatusLine(status, tiers);
+    } catch (err) {
+      planError.textContent =
+        err instanceof ApiError ? err.message : "Couldn't load plans. Please try again.";
+      planError.hidden = false;
+    }
+  }
+
+  function showCreditsModal(heading: string, message: string): void {
+    creditsModalHeading.textContent = heading;
+    creditsModalMessage.textContent = message;
+    creditsModal.hidden = false;
+  }
+  function hideCreditsModal(): void {
+    creditsModal.hidden = true;
+  }
+  creditsModalClose.addEventListener("click", hideCreditsModal);
+  creditsModal.addEventListener("click", (event) => {
+    if (event.target === creditsModal) hideCreditsModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !creditsModal.hidden) hideCreditsModal();
+  });
+  creditsModalPlans.addEventListener("click", () => {
+    hideCreditsModal();
+    setActiveTab("plans");
+  });
+
+  // Every Lead Finder-specific reason the backend blocks an action (out of
+  // credits, daily free-search cap, free plan can't "get more leads") gets
+  // the same upgrade-prompt modal instead of the generic redirect-to-account
+  // handling other 403s get — matched by a distinctive phrase from each
+  // real server message rather than the generic "Lead Finder" substring,
+  // since these come from different endpoints with different wording.
+  const UPGRADE_BLOCK_PHRASES = [
+    "out of Lead Finder credits",
+    "free searches today",
+    "get more leads per search",
+  ];
+
+  function handleError(err: unknown): void {
+    if (err instanceof ApiError && err.statusCode === 401) {
+      clearAccessToken();
+      redirectToSignin();
+      return;
+    }
+    if (
+      err instanceof ApiError &&
+      err.statusCode === 403 &&
+      UPGRADE_BLOCK_PHRASES.some((phrase) => err.message.includes(phrase))
+    ) {
+      showCreditsModal("Keep the leads coming", err.message);
+      return;
+    }
+    if (err instanceof ApiError && err.statusCode === 403 && !err.message.includes("Lead Finder")) {
+      window.location.href = "/account";
+      return;
+    }
+    pageError.textContent =
+      err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+    pageError.hidden = false;
+  }
+
+  // ── Tabs ─────────────────────────────────────────────────────────────
+
+  function setTabState(button: HTMLButtonElement, active: boolean): void {
+    button.classList.toggle("border-navy", active);
+    button.classList.toggle("text-navy", active);
+    button.classList.toggle("font-semibold", active);
+    button.classList.toggle("border-transparent", !active);
+    button.classList.toggle("text-ink-faint", !active);
+    button.classList.toggle("font-medium", !active);
+  }
+
+  function setActiveTab(tab: "search" | "history" | "plans"): void {
+    panelSearch.hidden = tab !== "search";
+    panelHistory.hidden = tab !== "history";
+    panelPlans.hidden = tab !== "plans";
+    setTabState(tabSearch, tab === "search");
+    setTabState(tabHistory, tab === "history");
+    setTabState(tabPlans, tab === "plans");
+    if (tab === "history") {
+      historyDetail.hidden = true;
+      historyList.hidden = false;
+      void loadHistory();
+    } else if (tab === "plans") {
+      void loadPlans();
+    }
+  }
+  tabSearch.addEventListener("click", () => setActiveTab("search"));
+  tabHistory.addEventListener("click", () => setActiveTab("history"));
+  tabPlans.addEventListener("click", () => setActiveTab("plans"));
+
+  // ── Reusable tag-input / pill-select widgets ────────────────────────
+
+  interface TagInput {
+    getValues(): string[];
+    setValues(values: string[]): void;
+  }
+
+  type SuggestField = "title" | "company";
+
+  function createTagInput(
+    container: HTMLDivElement,
+    suggestionsEl?: HTMLDivElement,
+    suggestField?: SuggestField,
+    staticOptions?: string[],
+  ): TagInput {
+    const textInput = container.querySelector<HTMLInputElement>(".tag-text-input")!;
+    let values: string[] = [];
+
+    function render(): void {
+      container.querySelectorAll("[data-tag]").forEach((el) => el.remove());
+      for (const value of values) {
+        const chip = document.createElement("span");
+        chip.dataset.tag = "true";
+        chip.className =
+          "inline-flex items-center gap-1 rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy";
+        chip.textContent = value;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "×";
+        remove.className = "ml-0.5 text-navy hover:text-navy-mid";
+        remove.addEventListener("click", () => {
+          values = values.filter((v) => v !== value);
+          render();
+        });
+        chip.appendChild(remove);
+        container.insertBefore(chip, textInput);
+      }
+    }
+
+    function addValue(value: string): void {
+      const trimmed = value.trim();
+      if (trimmed && !values.includes(trimmed)) {
+        values = [...values, trimmed];
+        render();
+      }
+      textInput.value = "";
+      if (suggestionsEl) suggestionsEl.hidden = true;
+    }
+
+    textInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === ",") {
+        event.preventDefault();
+        addValue(textInput.value);
+      }
+    });
+
+    function renderSuggestionOptions(options: string[]): void {
+      if (!suggestionsEl) return;
+      const filtered = options.filter((label) => !values.includes(label));
+      if (filtered.length === 0) {
+        suggestionsEl.hidden = true;
+        return;
+      }
+      suggestionsEl.innerHTML = filtered
+        .slice(0, 8)
+        .map(
+          (label) => `
+          <button type="button" data-suggest-value="${escapeHtml(label)}" class="suggest-item block w-full rounded-lg px-2.5 py-1.5 text-left text-[13px] text-ink transition-colors hover:bg-bg-soft">${escapeHtml(label)}</button>`,
+        )
+        .join("");
+      suggestionsEl.querySelectorAll<HTMLButtonElement>(".suggest-item").forEach((btn) => {
+        btn.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+          addValue(btn.dataset.suggestValue!);
+        });
+      });
+      suggestionsEl.hidden = false;
+    }
+
+    if (suggestionsEl && staticOptions) {
+      // Instant, offline filtering — no debounce or network round-trip
+      // needed for a fixed, already-loaded list.
+      textInput.addEventListener("input", () => {
+        const q = textInput.value.trim().toLowerCase();
+        if (!q) {
+          suggestionsEl.hidden = true;
+          return;
+        }
+        renderSuggestionOptions(staticOptions.filter((t) => t.toLowerCase().includes(q)));
+      });
+      textInput.addEventListener("focus", () => {
+        if (!textInput.value.trim()) renderSuggestionOptions(staticOptions);
+      });
+      textInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          suggestionsEl.hidden = true;
+        }, 150);
+      });
+    }
+
+    if (suggestionsEl && suggestField) {
+      let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+      let requestToken = 0;
+
+      async function fetchSuggestions(q: string): Promise<void> {
+        const token = ++requestToken;
+        try {
+          const rows = await authFetch<{ value: string }[]>(
+            `/leads/suggest?field=${suggestField}&q=${encodeURIComponent(q)}`,
+          );
+          if (token !== requestToken) return;
+          renderSuggestionOptions(rows.map((r) => r.value));
+        } catch {
+          suggestionsEl!.hidden = true;
+        }
+      }
+
+      textInput.addEventListener("input", () => {
+        const q = textInput.value.trim();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (q.length < 2) {
+          suggestionsEl.hidden = true;
+          return;
+        }
+        debounceTimer = setTimeout(() => void fetchSuggestions(q), 220);
+      });
+      textInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          suggestionsEl.hidden = true;
+        }, 150);
+      });
+    }
+
+    return {
+      getValues: () => values,
+      setValues: (next) => {
+        values = [...next];
+        render();
+      },
+    };
+  }
+
+  interface PillSelect {
+    getValues(): string[];
+    setValues(values: string[]): void;
+  }
+
+  function createPillSelect(
+    container: HTMLDivElement,
+    options: { value: string; label: string }[],
+  ): PillSelect {
+    let selected = new Set<string>();
+    container.innerHTML = options
+      .map(
+        (opt) => `
+      <button type="button" data-pill-value="${escapeHtml(opt.value)}" class="pill-option rounded-full border-2 border-line px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-navy">
+        ${escapeHtml(opt.label)}
+      </button>`,
+      )
+      .join("");
+
+    function refresh(): void {
+      container.querySelectorAll<HTMLButtonElement>(".pill-option").forEach((btn) => {
+        const value = btn.dataset.pillValue!;
+        const active = selected.has(value);
+        btn.classList.toggle("border-navy", active);
+        btn.classList.toggle("bg-navy", active);
+        btn.classList.toggle("text-white", active);
+        btn.classList.toggle("border-line", !active);
+        btn.classList.toggle("text-ink-soft", !active);
+      });
+    }
+
+    container.querySelectorAll<HTMLButtonElement>(".pill-option").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = btn.dataset.pillValue!;
+        if (selected.has(value)) selected.delete(value);
+        else selected.add(value);
+        refresh();
+      });
+    });
+    refresh();
+
+    return {
+      getValues: () => [...selected],
+      setValues: (values) => {
+        selected = new Set(values);
+        refresh();
+      },
+    };
+  }
+
+  const keywordsInput = createTagInput(fieldKeywords, fieldKeywordsSuggestions, "company");
+  const industriesInput = createTagInput(fieldIndustries, fieldIndustriesSuggestions, undefined, COMMON_INDUSTRIES);
+  const rolesInput = createTagInput(fieldRoles, fieldRolesSuggestions, undefined, COMMON_JOB_TITLES);
+  const exclusionsInput = createTagInput(fieldExclusions);
+  let senioritySelect: PillSelect | null = null;
+  let companySizeSelect: PillSelect | null = null;
+
+  // ── Department / job function dropdown ──────────────────────────────
+
+  interface DeptOption {
+    key: string;
+    label: string;
+    mapsTo: string | null;
+  }
+  let deptOptions: DeptOption[] = [];
+  let deptSelected = new Set<string>();
+
+  function flattenDepartments(departments: DepartmentSection[]): DeptOption[] {
+    const options: DeptOption[] = [];
+    for (const section of departments) {
+      for (const item of section.items) {
+        const mapsTo = item.mapsTo !== undefined ? (item.mapsTo ?? null) : section.mapsTo;
+        const label = item.label === section.section ? section.section : `${section.section} → ${item.label}`;
+        options.push({ key: `${section.section}::${item.label}`, label, mapsTo });
+      }
+    }
+    return options;
+  }
+
+  function renderDeptList(filter: string): void {
+    const q = filter.trim().toLowerCase();
+    const filtered = q ? deptOptions.filter((o) => o.label.toLowerCase().includes(q)) : deptOptions;
+    if (filtered.length === 0) {
+      deptList.innerHTML = `<p class="px-2 py-4 text-center text-[12px] text-ink-faint">No matches</p>`;
+      return;
+    }
+    deptList.innerHTML = filtered
+      .slice(0, 400)
+      .map(
+        (opt) => `
+      <label class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink hover:bg-bg-soft">
+        <input type="checkbox" data-dept-key="${escapeHtml(opt.key)}" ${deptSelected.has(opt.key) ? "checked" : ""} class="dept-checkbox h-3.5 w-3.5 rounded border-line text-navy" />
+        <span class="flex-1">${escapeHtml(opt.label)}</span>
+        ${opt.mapsTo ? "" : `<span class="shrink-0 text-[11px] text-ink-faint">browse only</span>`}
+      </label>`,
+      )
+      .join("");
+    deptList.querySelectorAll<HTMLInputElement>(".dept-checkbox").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const key = cb.dataset.deptKey!;
+        if (cb.checked) deptSelected.add(key);
+        else deptSelected.delete(key);
+        updateDeptSummary();
+      });
+    });
+  }
+
+  function updateDeptSummary(): void {
+    deptSummary.textContent = deptSelected.size === 0 ? "Any department" : `${deptSelected.size} selected`;
+  }
+
+  function getDeptPersonFunctions(): string[] {
+    const values = new Set<string>();
+    for (const key of deptSelected) {
+      const opt = deptOptions.find((o) => o.key === key);
+      if (opt?.mapsTo) values.add(opt.mapsTo);
+    }
+    return [...values];
+  }
+
+  deptDropdownToggle.addEventListener("click", () => {
+    deptDropdown.hidden = !deptDropdown.hidden;
+    if (!deptDropdown.hidden) deptSearchInput.focus();
+  });
+  deptSearchInput.addEventListener("input", () => renderDeptList(deptSearchInput.value));
+  document.addEventListener("click", (event) => {
+    if (
+      !deptDropdown.hidden &&
+      !deptDropdown.contains(event.target as Node) &&
+      !deptDropdownToggle.contains(event.target as Node)
+    ) {
+      deptDropdown.hidden = true;
+    }
+  });
+
+  async function loadTaxonomy(): Promise<void> {
+    try {
+      const taxonomy = await authFetch<Taxonomy>("/leads/taxonomy");
+      senioritySelect = createPillSelect(
+        fieldSeniority,
+        taxonomy.personSeniorities.map((s) => ({ value: s, label: SENIORITY_LABELS[s] ?? s })),
+      );
+      companySizeSelect = createPillSelect(
+        fieldCompanySize,
+        taxonomy.companySizeRanges.map((r) => ({ value: r.value, label: r.label })),
+      );
+      deptOptions = flattenDepartments(taxonomy.departments);
+      renderDeptList("");
+    } catch {
+      // Non-fatal — those three review fields just stay empty/disabled if this fails.
+    }
+  }
+
+  // ── Query step: animated placeholder + suggestions ──────────────────
+
+  function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  let placeholderActive = true;
+
+  async function runPlaceholderCycle(): Promise<void> {
+    let exampleIndex = 0;
+    while (placeholderActive) {
+      const text = EXAMPLE_QUERIES[exampleIndex % EXAMPLE_QUERIES.length];
+      exampleIndex += 1;
+      for (let i = 0; i <= text.length; i++) {
+        if (!placeholderActive || queryInput.value) return;
+        queryInput.placeholder = text.slice(0, i);
+        await sleep(38);
+      }
+      await sleep(1400);
+      for (let i = text.length; i >= 0; i--) {
+        if (!placeholderActive || queryInput.value) return;
+        queryInput.placeholder = text.slice(0, i);
+        await sleep(18);
+      }
+      await sleep(300);
+    }
+  }
+
+  function renderSuggestions(): void {
+    suggestionsList.innerHTML = EXAMPLE_QUERIES.map(
+      (q, i) => `
+      <button type="button" data-suggestion-index="${i}" class="suggestion-item flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-bg-soft hover:text-ink">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="mt-0.5 shrink-0 text-ink-faint" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" /><path d="m20 20-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+        <span>${escapeHtml(q)}</span>
+      </button>`,
+    ).join("");
+    suggestionsList.querySelectorAll<HTMLButtonElement>(".suggestion-item").forEach((btn) => {
+      btn.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        const idx = Number(btn.dataset.suggestionIndex);
+        queryInput.value = EXAMPLE_QUERIES[idx] ?? "";
+        placeholderActive = false;
+        suggestionsDropdown.hidden = true;
+        queryInput.focus();
+      });
+    });
+  }
+  renderSuggestions();
+
+  queryInput.addEventListener("focus", () => {
+    if (!queryInput.value) suggestionsDropdown.hidden = false;
+  });
+  queryInput.addEventListener("input", () => {
+    placeholderActive = false;
+    suggestionsDropdown.hidden = queryInput.value.length > 0;
+  });
+  queryInput.addEventListener("blur", () => {
+    setTimeout(() => {
+      suggestionsDropdown.hidden = true;
+    }, 150);
+  });
+
+  // ── Step transitions ─────────────────────────────────────────────────
+
+  function showQueryStep(): void {
+    stepQuery.hidden = false;
+    stepReview.hidden = true;
+    resultsSection.hidden = true;
+    stopPolling();
+    activeJobId = null;
+  }
+
+  function showReviewStep(): void {
+    stepQuery.hidden = true;
+    stepReview.hidden = false;
+    reviewLoading.hidden = false;
+    reviewFields.hidden = true;
+  }
+
+  reviewButton.addEventListener("click", async () => {
+    const query = queryInput.value.trim();
+    if (!query) return;
+    pageError.hidden = true;
+    showReviewStep();
+    try {
+      const parsed = await authFetch<ParsedFilters>("/leads/parse-query", {
+        method: "POST",
+        body: JSON.stringify({ query }),
+      });
+      latestParsed = parsed;
+      fieldCampaignName.value = parsed.campaignName;
+      keywordsInput.setValues(parsed.searchKeywords);
+      industriesInput.setValues(parsed.targetIndustries);
+      rolesInput.setValues(parsed.personTitles);
+      senioritySelect?.setValues(parsed.personSeniorities);
+      companySizeSelect?.setValues([]);
+      deptSelected = new Set();
+      renderDeptList(deptSearchInput.value);
+      updateDeptSummary();
+      fieldLocation.value = parsed.location;
+      fieldRevenueMin.value = "";
+      fieldRevenueMax.value = "";
+      exclusionsInput.setValues([]);
+      reviewLoading.hidden = true;
+      reviewFields.hidden = false;
+    } catch (err) {
+      showQueryStep();
+      handleError(err);
+    }
+  });
+
+  reviewBack.addEventListener("click", showQueryStep);
+
+  // ── Search: start, poll, cancel, get more ───────────────────────────
+
+  function setRunningUi(running: boolean): void {
+    runSearchButton.textContent = running ? "Stop" : "Search →";
+    runSearchButton.classList.toggle("bg-lime", !running);
+    runSearchButton.classList.toggle("hover:bg-lime-dark", !running);
+    runSearchButton.classList.toggle("text-navy-dark", !running);
+    runSearchButton.classList.toggle("bg-red-500", running);
+    runSearchButton.classList.toggle("hover:bg-red-600", running);
+    runSearchButton.classList.toggle("text-white", running);
+  }
+
+  function stopPolling(): void {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = undefined;
+  }
+
+  async function pollJob(jobId: string, isFirstTick: boolean): Promise<void> {
+    let job: SearchJob;
+    try {
+      job = await authFetch<SearchJob>(`/leads/ai-search/${jobId}`);
+    } catch (err) {
+      stopPolling();
+      activeJobId = null;
+      setRunningUi(false);
+      handleError(err);
+      return;
+    }
+
+    resultsSection.hidden = false;
+
+    if (isFirstTick) {
+      searchResultsView.render(jobId, job.results, false, `${slugifyFilename(job.query)}.csv`, () => {
+        setRunningUi(true);
+        startPolling(jobId);
+      });
+    } else {
+      searchResultsView.updateResults(job.results);
+    }
+
+    if (job.status === "FAILED") {
+      pageError.textContent = "Something went wrong running that search. Please try again.";
+      pageError.hidden = false;
+    }
+
+    if (job.status !== "RUNNING") {
+      stopPolling();
+      activeJobId = null;
+      setRunningUi(false);
+      searchResultsView.setGetMoreVisible(job.status === "COMPLETED");
+      try {
+        updateCredits(await authFetch<CreditsResponse>("/leads/credits"));
+      } catch {
+        // Non-fatal — the credits label just stays at its last known value.
+      }
+    } else {
+      searchResultsView.setGetMoreVisible(false);
+    }
+  }
+
+  function startPolling(jobId: string): void {
+    activeJobId = jobId;
+    stopPolling();
+    pollTimer = setInterval(() => void pollJob(jobId, false), 1500);
+    void pollJob(jobId, true);
+  }
+
+  runSearchButton.addEventListener("click", async () => {
+    if (activeJobId) {
+      try {
+        await authFetch(`/leads/ai-search/${activeJobId}/cancel`, { method: "POST" });
+      } catch (err) {
+        handleError(err);
+      }
+      return;
+    }
+
+    const campaignName = fieldCampaignName.value.trim() || queryInput.value.trim().slice(0, 200);
+    if (!campaignName) return;
+
+    pageError.hidden = true;
+    setRunningUi(true);
+    resultsSection.hidden = false;
+
+    const revenueMin = fieldRevenueMin.value ? Number(fieldRevenueMin.value) : undefined;
+    const revenueMax = fieldRevenueMax.value ? Number(fieldRevenueMax.value) : undefined;
+
+    try {
+      const { jobId } = await authFetch<{ jobId: string }>("/leads/ai-search", {
+        method: "POST",
+        body: JSON.stringify({
+          campaignName,
+          searchKeywords: keywordsInput.getValues(),
+          targetIndustries: industriesInput.getValues(),
+          personTitles: rolesInput.getValues(),
+          personSeniorities: senioritySelect?.getValues() ?? [],
+          personFunctions: getDeptPersonFunctions(),
+          location: fieldLocation.value.trim() || undefined,
+          companySizeRanges: companySizeSelect?.getValues() ?? [],
+          revenueMin,
+          revenueMax,
+          exclusions: exclusionsInput.getValues(),
+          personName: latestParsed?.personName || undefined,
+          personOrganization: latestParsed?.personOrganization || undefined,
+        }),
+      });
+      startPolling(jobId);
+    } catch (err) {
+      setRunningUi(false);
+      handleError(err);
+    }
+  });
+
+  // ── History ──────────────────────────────────────────────────────────
+
+  function historyRowHtml(item: HistoryItem): string {
+    const date = new Date(item.createdAt).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const statusText =
+      item.status === "RUNNING"
+        ? "In progress"
+        : item.status.charAt(0) + item.status.slice(1).toLowerCase();
+    return `
+      <div class="flex items-center gap-2 px-4 py-3.5 transition-colors hover:bg-bg-soft">
+        <button type="button" data-job-id="${escapeHtml(item.id)}" class="history-row-open min-w-0 flex-1 text-left">
+          <p class="truncate text-[13px] font-medium text-ink">${escapeHtml(item.query)}</p>
+          <p class="mt-0.5 text-[12px] text-ink-faint">${date} · ${item.resultCount} result${item.resultCount === 1 ? "" : "s"}</p>
+        </button>
+        <span class="shrink-0 rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft">${statusText}</span>
+        <button
+          type="button"
+          data-export-job-id="${escapeHtml(item.id)}"
+          data-export-name="${escapeHtml(item.query)}"
+          title="Export CSV"
+          aria-label="Export CSV"
+          class="history-row-export shrink-0 inline-flex items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          Export
+        </button>
+      </div>`;
+  }
+
+  async function exportHistoryRow(jobId: string, name: string): Promise<void> {
+    try {
+      const job = await authFetch<SearchJob>(`/leads/ai-search/${jobId}`);
+      exportResultsCsv(job.results, `${slugifyFilename(name)}.csv`);
+    } catch (err) {
+      handleError(err);
+    }
+  }
+
+  async function loadHistory(): Promise<void> {
+    try {
+      const items = await authFetch<HistoryItem[]>("/leads/ai-search/history");
+      if (items.length === 0) {
+        historyList.innerHTML = `<p class="px-4 py-8 text-center text-[13px] text-ink-faint">No searches yet — run one from the Search tab.</p>`;
+        return;
+      }
+      historyList.innerHTML = items.map(historyRowHtml).join("");
+      historyList.querySelectorAll<HTMLButtonElement>(".history-row-open").forEach((row) => {
+        row.addEventListener("click", () => {
+          const jobId = row.dataset.jobId;
+          if (jobId) void openHistoryDetail(jobId);
+        });
+      });
+      historyList.querySelectorAll<HTMLButtonElement>(".history-row-export").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const jobId = btn.dataset.exportJobId;
+          const name = btn.dataset.exportName ?? "lead-finder-results";
+          if (jobId) void exportHistoryRow(jobId, name);
+        });
+      });
+    } catch (err) {
+      handleError(err);
+    }
+  }
+
+  async function openHistoryDetail(jobId: string): Promise<void> {
+    try {
+      const job = await authFetch<SearchJob>(`/leads/ai-search/${jobId}`);
+      historyDetailQuery.textContent = job.query;
+      historyResultsView.render(jobId, job.results, job.status === "COMPLETED", `${slugifyFilename(job.query)}.csv`, () => {
+        void openHistoryDetail(jobId);
+      });
+      historyList.hidden = true;
+      historyDetail.hidden = false;
+    } catch (err) {
+      handleError(err);
+    }
+  }
+
+  historyBack.addEventListener("click", () => {
+    historyDetail.hidden = true;
+    historyList.hidden = false;
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────────
+
+  function showCreditsBanner(): void {
+    const params = new URLSearchParams(window.location.search);
+    const creditsParam = params.get("credits");
+    const tierParam = params.get("tier");
+    if (creditsParam === "success") {
+      creditsBanner.textContent = "Credits added — ready to search.";
+      creditsBanner.hidden = false;
+    } else if (creditsParam === "cancelled") {
+      creditsBanner.textContent = "Checkout cancelled — no credits were purchased.";
+      creditsBanner.hidden = false;
+    } else if (tierParam === "success") {
+      creditsBanner.textContent = "Plan updated — your credits will land shortly.";
+      creditsBanner.hidden = false;
+    } else if (tierParam === "cancelled") {
+      creditsBanner.textContent = "Checkout cancelled — your plan wasn't changed.";
+      creditsBanner.hidden = false;
+    }
+  }
+
+  async function init(): Promise<void> {
+    if (!isAuthenticated()) {
+      redirectToSignin();
+      return;
+    }
+    showCreditsBanner();
+    try {
+      const [credits] = await Promise.all([
+        authFetch<CreditsResponse>("/leads/credits"),
+        loadCreditPack(),
+        loadTaxonomy(),
+      ]);
+      updateCredits(credits);
+      loading.hidden = true;
+      content.hidden = false;
+      void runPlaceholderCycle();
+    } catch (err) {
+      loading.hidden = true;
+      handleError(err);
+    }
+  }
+
+  init();
+</script>

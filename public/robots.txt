@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /account
+Disallow: /admin
+Disallow: /directory
+Disallow: /leads-finder
+Disallow: /settings
+Disallow: /impersonate
+
+Sitemap: https://conference.contact/sitemap.xml

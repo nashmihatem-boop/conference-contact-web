@@ -1,0 +1,153 @@
+---
+---
+
+<section class="bg-bg-soft px-5 pb-20 sm:px-8 sm:pb-28">
+  <div class="mx-auto max-w-4xl">
+    <p class="mb-3 text-center text-[13px] font-medium text-ink-faint">Live preview — real matches from our directory</p>
+
+    <!-- toolbar -->
+    <div class="flex flex-col gap-2 rounded-t-2xl border border-b-0 border-line bg-white p-3 sm:flex-row sm:items-center">
+      <div class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-white px-3 py-2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-ink-faint">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+          <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <span id="demo-query-label" class="text-[14px] text-ink">Affiliate Summit East 2026</span>
+      </div>
+      <div class="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft">
+        Tied to event: All
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+      <div class="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft">
+        Type of company: All
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <!-- table -->
+    <div class="overflow-x-auto rounded-b-2xl border border-line bg-white">
+      <table class="w-full min-w-[640px] border-collapse text-left">
+        <thead>
+          <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+            <th class="px-4 py-3 font-semibold">Contact</th>
+            <th class="px-4 py-3 font-semibold">Company</th>
+            <th class="px-4 py-3 font-semibold">Contact details</th>
+            <th class="px-4 py-3 font-semibold">Tied to event</th>
+            <th class="px-4 py-3 font-semibold">Type</th>
+          </tr>
+        </thead>
+        <tbody id="demo-results-body"></tbody>
+      </table>
+    </div>
+
+    <!-- unlock band -->
+    <div class="mt-6 rounded-2xl bg-navy px-6 py-8 text-center sm:px-10">
+      <h2 class="text-xl font-bold text-white sm:text-2xl">Unlock full contact details for these leads</h2>
+      <p class="mx-auto mt-2 max-w-md text-[14px] text-white/70">
+        Get verified email, phone, and LinkedIn for every match — subscribe
+        for full directory access.
+      </p>
+      <a
+        href="/signup"
+        class="mt-5 inline-block rounded-full bg-lime px-6 py-3 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark"
+      >
+        Get full access
+      </a>
+    </div>
+
+    <div class="mt-4 rounded-xl bg-white px-6 py-5 text-center">
+      <p class="text-[14px] text-ink">
+        Can't find who you're looking for?
+        <a href="/contact" class="ml-1 font-semibold text-navy hover:text-navy-mid">
+          Tell us and we'll help you look →
+        </a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { apiFetch, ApiError } from "../lib/api";
+  import { escapeHtml, formatCompanyType } from "../lib/leads-table";
+
+  interface PreviewLead {
+    name: string;
+    title: string | null;
+    company: string | null;
+    companyType: string;
+    likelyToAttend: string;
+  }
+
+  const queryLabel = document.querySelector<HTMLSpanElement>("#demo-query-label")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#demo-results-body")!;
+
+  function maskedEmail(name: string): string {
+    return `${name.toLowerCase().replace(/[^a-z]/g, "")}@example.com`;
+  }
+
+  function rowHtml(lead: PreviewLead, isLast: boolean): string {
+    return `
+      <tr class="${isLast ? "" : "border-b border-line"}">
+        <td class="px-4 py-4">
+          <p class="text-[14px] font-semibold text-ink">${escapeHtml(lead.name)}</p>
+          ${lead.title ? `<p class="text-[13px] text-ink-faint">${escapeHtml(lead.title)}</p>` : ""}
+        </td>
+        <td class="px-4 py-4 text-[14px] text-ink-soft">${lead.company ? escapeHtml(lead.company) : "—"}</td>
+        <td class="px-4 py-4">
+          <span class="blur-cell inline-flex items-center gap-1.5 text-[13px] text-ink-soft">${escapeHtml(maskedEmail(lead.name))}</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="ml-1.5 inline text-ink-faint">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </td>
+        <td class="px-4 py-4">
+          <span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">${escapeHtml(lead.likelyToAttend)}</span>
+        </td>
+        <td class="px-4 py-4">
+          <span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">${escapeHtml(formatCompanyType(lead.companyType))}</span>
+        </td>
+      </tr>`;
+  }
+
+  async function render(query: string): Promise<void> {
+    queryLabel.textContent = query || "All contacts";
+    if (query.trim().length < 2) {
+      resultsBody.innerHTML = `
+        <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">Type at least 2 characters to search.</td></tr>`;
+      return;
+    }
+
+    resultsBody.innerHTML = `
+      <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">Searching…</td></tr>`;
+
+    try {
+      const leads = await apiFetch<PreviewLead[]>(
+        `/leads/preview?search=${encodeURIComponent(query)}`,
+      );
+      if (leads.length === 0) {
+        resultsBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">
+              No match for "${escapeHtml(query)}" — the real directory covers 21,000+ contacts across 8 events.
+            </td>
+          </tr>`;
+        return;
+      }
+      resultsBody.innerHTML = leads.map((lead, i) => rowHtml(lead, i === leads.length - 1)).join("");
+    } catch (err) {
+      const message =
+        err instanceof ApiError && err.statusCode === 429
+          ? "Too many searches — try again in a minute."
+          : "Search unavailable right now — try again shortly.";
+      resultsBody.innerHTML = `
+        <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">${escapeHtml(message)}</td></tr>`;
+    }
+  }
+
+  document.addEventListener("demo-search", (event) => {
+    const detail = (event as CustomEvent<{ query: string }>).detail;
+    void render(detail?.query?.trim() ?? "");
+  });
+
+  void render("Affiliate Summit East 2026");
+</script>

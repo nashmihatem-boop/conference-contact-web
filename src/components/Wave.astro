@@ -1,0 +1,16 @@
+---
+interface Props {
+  before?: string;
+  after?: string;
+}
+const { before = "var(--color-navy)", after = "var(--color-bg-soft)" } = Astro.props;
+---
+
+<div aria-hidden="true" class="h-12 w-full sm:h-20" style={`background-color:${before}`}>
+  <svg viewBox="0 0 1440 100" preserveAspectRatio="none" class="h-full w-full">
+    <path
+      d="M0,35 C320,95 760,0 1080,40 C1260,62 1360,55 1440,38 L1440,100 L0,100 Z"
+      fill={after}
+    />
+  </svg>
+</div>

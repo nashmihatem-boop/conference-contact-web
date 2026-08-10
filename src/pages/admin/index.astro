@@ -1,0 +1,89 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Admin</h1>
+    <p class="mt-1 text-[14px] text-ink-soft">Users, billing, the lead directory, and account security in one place.</p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <a href="/admin/users" class="dashboard-card rounded-2xl border border-line bg-white p-6 transition-colors hover:border-navy">
+        <span id="count-users" class="block font-display text-3xl font-extrabold text-navy">—</span>
+        <span class="mt-1 block text-[14px] font-semibold text-ink">Users</span>
+        <span class="mt-1 block text-[13px] text-ink-soft">Accounts, roles, and account status.</span>
+      </a>
+      <a href="/admin/subscriptions" class="dashboard-card rounded-2xl border border-line bg-white p-6 transition-colors hover:border-navy">
+        <span id="count-subscriptions" class="block font-display text-3xl font-extrabold text-navy">—</span>
+        <span class="mt-1 block text-[14px] font-semibold text-ink">Subscriptions</span>
+        <span class="mt-1 block text-[13px] text-ink-soft">Billing status across every plan.</span>
+      </a>
+      <a href="/admin/leads" class="dashboard-card rounded-2xl border border-line bg-white p-6 transition-colors hover:border-navy">
+        <span id="count-leads" class="block font-display text-3xl font-extrabold text-navy">—</span>
+        <span class="mt-1 block text-[14px] font-semibold text-ink">Leads</span>
+        <span class="mt-1 block text-[13px] text-ink-soft">The directory dataset — add, edit, remove records.</span>
+      </a>
+      <a href="/admin/audit-logs" class="dashboard-card rounded-2xl border border-line bg-white p-6 transition-colors hover:border-navy">
+        <span id="count-audit" class="block font-display text-3xl font-extrabold text-navy">—</span>
+        <span class="mt-1 block text-[14px] font-semibold text-ink">Audit Logs</span>
+        <span class="mt-1 block text-[13px] text-ink-soft">Every important action, append-only.</span>
+      </a>
+      <a href="/admin/security" class="dashboard-card rounded-2xl border border-line bg-white p-6 transition-colors hover:border-navy">
+        <span id="count-security" class="block font-display text-3xl font-extrabold text-navy">—</span>
+        <span class="mt-1 block text-[14px] font-semibold text-ink">Flagged Sessions</span>
+        <span class="mt-1 block text-[13px] text-ink-soft">Logins with a non-zero risk score.</span>
+      </a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface Page<T> {
+    data: T[];
+    total: number;
+  }
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+
+  async function loadCounts(): Promise<void> {
+    const [users, subscriptions, leads, auditLogs, security] = await Promise.all([
+      authFetch<Page<unknown>>("/admin/users?pageSize=1"),
+      authFetch<Page<unknown>>("/admin/subscriptions?pageSize=1"),
+      authFetch<Page<unknown>>("/admin/leads?pageSize=1"),
+      authFetch<Page<unknown>>("/admin/audit-logs?pageSize=1"),
+      authFetch<Page<unknown>>("/admin/security/sessions?pageSize=1"),
+    ]);
+    document.querySelector("#count-users")!.textContent = users.total.toLocaleString();
+    document.querySelector("#count-subscriptions")!.textContent = subscriptions.total.toLocaleString();
+    document.querySelector("#count-leads")!.textContent = leads.total.toLocaleString();
+    document.querySelector("#count-audit")!.textContent = auditLogs.total.toLocaleString();
+    document.querySelector("#count-security")!.textContent = security.total.toLocaleString();
+  }
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      await loadCounts();
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

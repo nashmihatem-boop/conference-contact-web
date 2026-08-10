@@ -1,0 +1,126 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import AdminNav from "../../components/AdminNav.astro";
+---
+
+<Layout title="Admin · Billing — conference.contact" noindex>
+  <Nav />
+  <AdminNav />
+
+  <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Monthly Billing</h1>
+    <p class="mt-1 text-[14px] text-ink-soft">Revenue collected each month, counted the day an invoice was actually paid.</p>
+
+    <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+    <div id="admin-loading" class="mt-6 text-[14px] text-ink-soft">Loading…</div>
+
+    <div id="admin-content" hidden>
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <div class="rounded-2xl border border-line bg-white p-6">
+          <span id="total-revenue" class="block font-display text-3xl font-extrabold text-navy">—</span>
+          <span class="mt-1 block text-[13px] text-ink-soft">Total revenue collected, all time.</span>
+        </div>
+        <div class="rounded-2xl border border-line bg-white p-6">
+          <span id="directory-revenue" class="block font-display text-3xl font-extrabold text-navy">—</span>
+          <span class="mt-1 block text-[13px] text-ink-soft">Directory plan, all time.</span>
+        </div>
+        <div class="rounded-2xl border border-line bg-white p-6">
+          <span id="lead-finder-revenue" class="block font-display text-3xl font-extrabold text-navy">—</span>
+          <span class="mt-1 block text-[13px] text-ink-soft">Lead Finder tiers + credit packs, all time.</span>
+        </div>
+      </div>
+
+      <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">
+        <table class="w-full min-w-[680px] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line bg-white text-[11px] uppercase tracking-wide text-ink-faint">
+              <th class="px-4 py-3 font-semibold">Month</th>
+              <th class="px-4 py-3 font-semibold">Total</th>
+              <th class="px-4 py-3 font-semibold">Directory</th>
+              <th class="px-4 py-3 font-semibold">Lead Finder</th>
+              <th class="px-4 py-3 font-semibold">Paid invoices</th>
+              <th class="px-4 py-3 font-semibold">Credit grants</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authFetch } from "../../lib/api";
+  import { handleAdminError, requireSignedIn } from "../../lib/admin";
+
+  interface MonthlyRevenue {
+    month: string;
+    totalCents: number;
+    directoryCents: number;
+    leadFinderCents: number;
+    currency: string;
+    invoiceCount: number;
+    creditGrantCount: number;
+  }
+
+  const loading = document.querySelector<HTMLDivElement>("#admin-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#admin-error")!;
+  const content = document.querySelector<HTMLDivElement>("#admin-content")!;
+  const totalRevenue = document.querySelector<HTMLSpanElement>("#total-revenue")!;
+  const directoryRevenue = document.querySelector<HTMLSpanElement>("#directory-revenue")!;
+  const leadFinderRevenue = document.querySelector<HTMLSpanElement>("#lead-finder-revenue")!;
+  const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
+
+  function money(cents: number, currency: string): string {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
+  }
+
+  function monthLabel(month: string): string {
+    const [year, m] = month.split("-").map(Number);
+    return new Date(year, m - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  function rowHtml(row: MonthlyRevenue): string {
+    return `
+      <tr class="border-b border-line last:border-b-0">
+        <td class="px-4 py-3 text-[14px] font-semibold text-ink">${monthLabel(row.month)}</td>
+        <td class="px-4 py-3 text-[14px] text-ink-soft">${money(row.totalCents, row.currency)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${money(row.directoryCents, row.currency)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${money(row.leadFinderCents, row.currency)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${row.invoiceCount}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${row.creditGrantCount}</td>
+      </tr>`;
+  }
+
+  async function init(): Promise<void> {
+    if (!requireSignedIn()) return;
+    try {
+      const rows = await authFetch<MonthlyRevenue[]>("/admin/billing/monthly");
+
+      if (rows.length === 0) {
+        totalRevenue.textContent = "$0";
+        directoryRevenue.textContent = "$0";
+        leadFinderRevenue.textContent = "$0";
+        resultsBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-[13px] text-ink-faint">No revenue collected yet.</td></tr>`;
+      } else {
+        const currency = rows[0].currency;
+        const totalCents = rows.reduce((sum, r) => sum + r.totalCents, 0);
+        const directoryCents = rows.reduce((sum, r) => sum + r.directoryCents, 0);
+        const leadFinderCents = rows.reduce((sum, r) => sum + r.leadFinderCents, 0);
+        totalRevenue.textContent = money(totalCents, currency);
+        directoryRevenue.textContent = money(directoryCents, currency);
+        leadFinderRevenue.textContent = money(leadFinderCents, currency);
+        resultsBody.innerHTML = rows.map(rowHtml).join("");
+      }
+
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (err) {
+      loading.hidden = true;
+      handleAdminError(err, errorBanner);
+    }
+  }
+
+  init();
+</script>

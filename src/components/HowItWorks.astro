@@ -1,0 +1,44 @@
+---
+const steps = [
+  {
+    n: "1",
+    title: "Search the directory",
+    body: "Look up a person, a company, a role, or a conference by name. No scraping, no cold LinkedIn spelunking through 400 attendees.",
+  },
+  {
+    n: "2",
+    title: "Unlock the record",
+    body: "Every match opens into a full card: verified email, direct phone where public, LinkedIn, current title, and which event they're tied to.",
+  },
+  {
+    n: "3",
+    title: "Export & reach out",
+    body: "Pull results to CSV or push straight into your CRM. Start outreach the same day the show floor opens.",
+  },
+];
+---
+
+<section id="how-it-works" class="bg-white px-5 py-20 sm:px-8 sm:py-28">
+  <div class="mx-auto max-w-6xl">
+    <div class="max-w-xl">
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-navy">How it works</p>
+      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+        Three steps, no booth required.
+      </h2>
+    </div>
+
+    <ol class="mt-14 grid gap-10 sm:grid-cols-3 sm:gap-8">
+      {
+        steps.map((step) => (
+          <li class="flex flex-col">
+            <span class="grid h-10 w-10 place-items-center rounded-full bg-lime text-[15px] font-bold text-navy-dark">
+              {step.n}
+            </span>
+            <h3 class="mt-5 text-lg font-bold text-ink">{step.title}</h3>
+            <p class="mt-2 text-[14px] leading-relaxed text-ink-soft">{step.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

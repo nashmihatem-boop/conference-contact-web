@@ -1,0 +1,353 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Wave from "../components/Wave.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout title="Your account — conference.contact" noindex>
+  <Nav />
+
+  <div class="relative overflow-hidden bg-navy px-5 pb-16 pt-14 sm:px-8 sm:pt-20">
+    <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-2xl">
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-lime">Account</p>
+      <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Your account</h1>
+      <p class="mt-2 text-[14px] text-white/60">Manage your plan and jump back into the product.</p>
+    </div>
+  </div>
+  <Wave before="var(--color-navy)" after="var(--color-bg-soft)" />
+
+  <div class="bg-bg-soft px-5 pt-6 pb-14 sm:px-8 sm:pt-8">
+    <div class="mx-auto max-w-2xl">
+      <div id="checkout-success-banner" hidden class="mb-5 rounded-xl border border-line bg-lime-tint px-4 py-3 text-[13px] text-ink">
+        Subscription active — welcome in.
+      </div>
+
+      <div id="account-loading" class="rounded-2xl bg-white p-8 text-[14px] text-ink-soft shadow-[0_25px_60px_-30px_rgba(11,20,84,0.4)]">Loading…</div>
+
+      <div id="account-error" hidden class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+
+      <div id="account-content" hidden class="flex flex-col gap-5">
+        <!-- Directory and Lead Finder are two separate products with two separate access models: Lead Finder is free for every signed-in user via a credit balance (see leads-finder.astro), so its card always navigates straight through. Directory requires the $50/6mo subscription — its card always shows too, but a click without access opens a subscribe prompt instead of navigating (see directory-locked-modal below). -->
+        <div class="grid gap-4 sm:grid-cols-2">
+          <a id="directory-card" href="/directory" class="group rounded-2xl bg-white p-6 shadow-[0_18px_45px_-30px_rgba(11,20,84,0.4)] transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-25px_rgba(11,20,84,0.4)]">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-lime-tint text-navy" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="5" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+                <path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              </svg>
+            </span>
+            <p class="mt-3 text-[15px] font-semibold text-ink">
+              Conference Attendees Directory <span class="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+            </p>
+            <p id="directory-card-subtext" class="mt-1 text-[13px] text-ink-soft">Search, filter, and export every verified conference contact.</p>
+          </a>
+          <a id="finder-card" href="/leads-finder" class="group relative rounded-2xl bg-white p-6 shadow-[0_18px_45px_-30px_rgba(11,20,84,0.4)] transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-25px_rgba(11,20,84,0.4)]">
+            <span class="absolute -top-3 right-4 rounded-full bg-lime px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-navy-dark shadow-[0_6px_16px_-4px_rgba(195,219,66,0.6)]">
+              New
+            </span>
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-lime-tint text-navy" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3.5 13.4 8l4.6 1.4-4.6 1.4L12 15.2l-1.4-4.4L6 9.4l4.6-1.4L12 3.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+                <path d="M18.5 14.5 19.1 16.4 21 17l-1.9.6-.6 1.9-.6-1.9L16 17l1.9-.6.6-1.9Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+              </svg>
+            </span>
+            <p class="mt-3 text-[15px] font-semibold text-ink">
+              Lead Finder <span class="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+            </p>
+            <p class="mt-1 text-[13px] text-ink-soft">Describe who you need and let AI search the directory.</p>
+          </a>
+        </div>
+
+        <!-- Compact billing summary — the full plan/subscribe/cancel management UI lives on its own page now (/account/billing), matching Stripe's portal return_url. -->
+        <div id="past-due-notice" hidden class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
+        <a
+          id="billing-summary"
+          href="/account/billing"
+          class="group flex items-center justify-between gap-4 rounded-2xl bg-white p-6 shadow-[0_18px_45px_-30px_rgba(11,20,84,0.4)] transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-25px_rgba(11,20,84,0.4)]"
+        >
+          <div>
+            <p class="text-[13px] font-semibold uppercase tracking-wide text-ink-faint">Billing</p>
+            <p id="billing-summary-plan" class="mt-1 text-[15px] font-semibold text-ink"></p>
+            <p id="billing-summary-status" class="mt-0.5 text-[13px] text-ink-soft"></p>
+          </div>
+          <span class="shrink-0 text-[13px] font-semibold text-navy transition-transform group-hover:translate-x-0.5">
+            Manage →
+          </span>
+        </a>
+
+        <!-- Invite a colleague — always visible regardless of plan status; joining and subscribing are separate, later steps for the invitee -->
+        <div class="rounded-2xl bg-white p-7 shadow-[0_18px_45px_-30px_rgba(11,20,84,0.4)]">
+          <p class="text-[13px] font-semibold uppercase tracking-wide text-ink-faint">Invite a colleague</p>
+          <h2 class="mt-1.5 font-display text-lg font-extrabold tracking-tight text-ink">Know someone who'd find this useful?</h2>
+          <p class="mt-1 text-[13px] text-ink-soft">They'll get an email to create their own account — joining is free, subscribing is their call.</p>
+
+          <form id="invite-form" class="mt-4 flex flex-col gap-2.5 sm:flex-row">
+            <input
+              id="invite-email"
+              type="email"
+              required
+              placeholder="colleague@company.com"
+              class="w-full rounded-full border-2 border-line px-4 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none"
+            />
+            <button
+              id="invite-submit"
+              type="submit"
+              class="shrink-0 rounded-full bg-navy px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-navy-mid disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Send invite
+            </button>
+          </form>
+          <p id="invite-feedback" hidden class="mt-2.5 text-[13px]"></p>
+
+          <div id="invite-list" class="mt-1 divide-y divide-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="directory-locked-modal"
+    hidden
+    class="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 px-5 backdrop-blur-sm"
+  >
+    <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,20,84,0.5)]">
+      <div class="grid h-9 w-9 place-items-center rounded-lg bg-lime-tint text-navy" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.6" />
+          <path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+      </div>
+      <h2 class="mt-3 font-display text-lg font-extrabold tracking-tight text-ink">Subscribe to unlock the Directory</h2>
+      <p class="mt-1.5 text-[13px] text-ink-soft">21,744 verified contacts across 6 company types and 8 major B2B conferences — $50 for 6 months, search/filter/export included.</p>
+      <div class="mt-5 flex flex-col gap-2">
+        <a id="directory-locked-subscribe" href="/account/billing" class="w-full rounded-full bg-navy py-2.5 text-center text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">Subscribe →</a>
+        <button id="directory-locked-close" type="button" class="w-full rounded-full border-2 border-line py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-faint">Not now</button>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  import { authFetch, ApiError } from "../lib/api";
+  import { clearAccessToken, isAuthenticated, redirectToSignin } from "../lib/session";
+
+  interface SubscriptionStatus {
+    status: "NONE" | "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED";
+    plan?: string;
+    currentPeriodEnd?: string;
+    cancelAtPeriodEnd?: boolean;
+    hasDirectoryAccess: boolean;
+    daysPastDue?: number | null;
+  }
+
+  const loading = document.querySelector<HTMLDivElement>("#account-loading")!;
+  const errorBanner = document.querySelector<HTMLDivElement>("#account-error")!;
+  const content = document.querySelector<HTMLDivElement>("#account-content")!;
+  const directoryCard = document.querySelector<HTMLAnchorElement>("#directory-card")!;
+  const directoryCardSubtext = document.querySelector<HTMLParagraphElement>("#directory-card-subtext")!;
+  const directoryLockedModal = document.querySelector<HTMLDivElement>("#directory-locked-modal")!;
+  const directoryLockedClose = document.querySelector<HTMLButtonElement>("#directory-locked-close")!;
+  const billingSummaryPlan = document.querySelector<HTMLParagraphElement>("#billing-summary-plan")!;
+  const billingSummaryStatus = document.querySelector<HTMLParagraphElement>("#billing-summary-status")!;
+  const pastDueNotice = document.querySelector<HTMLDivElement>("#past-due-notice")!;
+  const checkoutBanner = document.querySelector<HTMLDivElement>("#checkout-success-banner")!;
+  const inviteForm = document.querySelector<HTMLFormElement>("#invite-form")!;
+  const inviteEmailInput = document.querySelector<HTMLInputElement>("#invite-email")!;
+  const inviteSubmit = document.querySelector<HTMLButtonElement>("#invite-submit")!;
+  const inviteFeedback = document.querySelector<HTMLParagraphElement>("#invite-feedback")!;
+  const inviteList = document.querySelector<HTMLDivElement>("#invite-list")!;
+
+  interface Invite {
+    id: string;
+    email: string;
+    status: "PENDING" | "ACCEPTED";
+    createdAt: string;
+  }
+
+  let hasDirectoryAccess = false;
+
+  function showDirectoryLockedModal(): void {
+    directoryLockedModal.hidden = false;
+  }
+  function hideDirectoryLockedModal(): void {
+    directoryLockedModal.hidden = true;
+  }
+  directoryLockedClose.addEventListener("click", hideDirectoryLockedModal);
+  directoryLockedModal.addEventListener("click", (event) => {
+    if (event.target === directoryLockedModal) hideDirectoryLockedModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !directoryLockedModal.hidden) hideDirectoryLockedModal();
+  });
+  directoryCard.addEventListener("click", (event) => {
+    if (!hasDirectoryAccess) {
+      event.preventDefault();
+      showDirectoryLockedModal();
+    }
+  });
+
+  function escapeHtml(value: string): string {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+  function inviteRowHtml(invite: Invite): string {
+    if (invite.status === "ACCEPTED") {
+      return `
+        <div class="flex items-center justify-between gap-3 py-2.5">
+          <span class="truncate text-[13px] text-ink">${escapeHtml(invite.email)}</span>
+          <span class="rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">Joined</span>
+        </div>`;
+    }
+    return `
+      <div class="flex items-center justify-between gap-3 py-2.5">
+        <span class="truncate text-[13px] text-ink">${escapeHtml(invite.email)}</span>
+        <span class="flex items-center gap-2">
+          <button type="button" data-resend="${escapeHtml(invite.email)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Resend</button>
+          <span class="rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft">Pending</span>
+        </span>
+      </div>`;
+  }
+
+  async function loadInvites(): Promise<void> {
+    try {
+      const invites = await authFetch<Invite[]>("/invites");
+      inviteList.innerHTML = invites.length
+        ? invites.map(inviteRowHtml).join("")
+        : "";
+      inviteList.querySelectorAll<HTMLButtonElement>("[data-resend]").forEach((button) => {
+        button.addEventListener("click", () => void resendInvite(button));
+      });
+    } catch {
+      // Non-fatal — the invite list just stays empty if this fails.
+    }
+  }
+
+  async function resendInvite(button: HTMLButtonElement): Promise<void> {
+    const email = button.dataset.resend!;
+    button.disabled = true;
+    button.textContent = "Sending…";
+    try {
+      await authFetch<{ message: string }>("/invites", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      inviteFeedback.textContent = `Invitation resent to ${email}.`;
+      inviteFeedback.className = "mt-2.5 text-[13px] text-navy";
+      inviteFeedback.hidden = false;
+    } catch (err) {
+      inviteFeedback.textContent =
+        err instanceof ApiError ? err.message : "Couldn't resend that invite. Please try again.";
+      inviteFeedback.className = "mt-2.5 text-[13px] text-red-600";
+      inviteFeedback.hidden = false;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Resend";
+    }
+  }
+
+  inviteForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = inviteEmailInput.value.trim();
+    if (!email) return;
+
+    inviteSubmit.disabled = true;
+    inviteSubmit.textContent = "Sending…";
+    inviteFeedback.hidden = true;
+    try {
+      await authFetch<{ message: string }>("/invites", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      inviteFeedback.textContent = "Invitation sent.";
+      inviteFeedback.className = "mt-2.5 text-[13px] text-navy";
+      inviteFeedback.hidden = false;
+      inviteEmailInput.value = "";
+      await loadInvites();
+    } catch (err) {
+      inviteFeedback.textContent =
+        err instanceof ApiError ? err.message : "Couldn't send that invite. Please try again.";
+      inviteFeedback.className = "mt-2.5 text-[13px] text-red-600";
+      inviteFeedback.hidden = false;
+    } finally {
+      inviteSubmit.disabled = false;
+      inviteSubmit.textContent = "Send invite";
+    }
+  });
+
+  if (!isAuthenticated()) {
+    redirectToSignin();
+  } else {
+    if (new URLSearchParams(window.location.search).get("checkout") === "success") {
+      checkoutBanner.hidden = false;
+    }
+    void loadStatus();
+    void loadInvites();
+  }
+
+  async function loadStatus() {
+    try {
+      const status = await authFetch<SubscriptionStatus>("/subscriptions/status");
+      loading.hidden = true;
+      content.hidden = false;
+
+      // Both cards always show now — Lead Finder always navigates straight
+      // through (no subscription gate at all, free via credit balance), and
+      // Directory shows too but a click without the $50/6mo subscription
+      // opens a subscribe prompt instead of a 403 on the destination page.
+      hasDirectoryAccess = status.hasDirectoryAccess;
+      directoryCardSubtext.textContent = hasDirectoryAccess
+        ? "Search, filter, and export every verified conference contact."
+        : "Subscribe to search, filter, and export every verified conference contact.";
+
+      // A PAST_DUE subscription past its grace period reads as "please
+      // subscribe again" rather than an active plan — matches what
+      // createCheckoutSession now actually allows (it cancels the dead
+      // subscription and lets a fresh one start).
+      const needsResubscribe =
+        status.status === "NONE" ||
+        status.status === "CANCELED" ||
+        (status.status === "PAST_DUE" && !status.hasDirectoryAccess);
+
+      if (needsResubscribe) {
+        billingSummaryPlan.textContent = "No active plan";
+        billingSummaryStatus.textContent = "$50 / 6 months — subscribe for full access";
+        if (status.status === "PAST_DUE") {
+          const days = status.daysPastDue ?? "several";
+          pastDueNotice.textContent = `Your last payment failed ${days} day${days === 1 ? "" : "s"} ago and access was suspended. Subscribe again to pick up where you left off.`;
+          pastDueNotice.hidden = false;
+        } else {
+          pastDueNotice.hidden = true;
+        }
+      } else {
+        pastDueNotice.hidden = true;
+        billingSummaryPlan.textContent = status.plan ?? "Full Access";
+        const periodEnd = status.currentPeriodEnd
+          ? new Date(status.currentPeriodEnd).toLocaleDateString()
+          : null;
+        billingSummaryStatus.textContent = status.cancelAtPeriodEnd
+          ? `Cancels ${periodEnd ?? "at the end of the current period"}`
+          : status.status === "PAST_DUE" && status.daysPastDue !== null && status.daysPastDue !== undefined
+            ? `Payment failed ${status.daysPastDue} day${status.daysPastDue === 1 ? "" : "s"} ago — update your payment method to keep access`
+            : periodEnd
+              ? `${status.status} — renews ${periodEnd}`
+              : status.status;
+      }
+    } catch (err) {
+      loading.hidden = true;
+      if (err instanceof ApiError && err.statusCode === 401) {
+        clearAccessToken();
+        redirectToSignin();
+        return;
+      }
+      errorBanner.textContent =
+        err instanceof ApiError ? err.message : "Couldn't load your account. Please try again.";
+      errorBanner.hidden = false;
+    }
+  }
+</script>

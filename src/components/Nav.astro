@@ -1,0 +1,183 @@
+---
+const links = [
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#coverage", label: "Coverage" },
+  { href: "/ai-lead-finder", label: "AI Lead Finder" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/#faq", label: "FAQ" },
+];
+---
+
+<div class="sticky top-0 z-50">
+  <div id="impersonation-banner" hidden class="flex items-center justify-center gap-3 bg-amber-400 px-4 py-2 text-[13px] font-semibold text-navy-dark">
+    <span id="impersonation-banner-text"></span>
+    <button id="impersonation-exit" type="button" class="rounded-full bg-navy-dark px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-navy">
+      Exit
+    </button>
+  </div>
+  <header class="bg-navy">
+  <nav class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-4 sm:px-8">
+    <a href="/" class="flex shrink-0 items-center gap-2.5 text-lg font-extrabold tracking-tight text-white">
+      <svg viewBox="0 0 96 96" class="h-8 w-8 shrink-0" aria-hidden="true">
+        <rect width="96" height="96" rx="26" fill="#C3DB42" />
+        <rect x="16" y="26" width="64" height="44" rx="9" fill="#0D1448" />
+        <circle cx="33" cy="44" r="8" fill="#C3DB42" />
+        <path d="M 22 62 a 11 11 0 0 1 22 0 z" fill="#C3DB42" />
+        <rect x="49" y="38" width="23" height="5.5" rx="2.75" fill="#C3DB42" />
+        <rect x="49" y="49" width="16" height="5" rx="2.5" fill="#FFFFFF" opacity="0.85" />
+        <circle cx="72" cy="66" r="13" fill="#C3DB42" />
+        <path d="M 66.5 66 l 4 4 l 7.5 -8.5" stroke="#0D1448" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      </svg>
+      <span class="hidden min-[430px]:inline">conference<span class="text-lime">.</span>contact</span>
+    </a>
+
+    <ul class="hidden items-center gap-8 text-[14px] font-medium text-white/70 md:flex">
+      {
+        links.map((link) => (
+          <li>
+            <a href={link.href} class="transition-colors hover:text-white">
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div id="nav-auth-actions" class="flex shrink-0 items-center gap-5">
+      <a
+        id="nav-signed-out"
+        href="/signin"
+        class="hidden text-[14px] font-medium text-white/70 transition-colors hover:text-white sm:inline"
+      >
+        Sign in
+      </a>
+      <a
+        id="nav-signup"
+        href="/signup"
+        class="rounded-full bg-lime px-5 py-2.5 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark"
+      >
+        Get started
+      </a>
+      <div id="nav-account-menu" hidden class="relative">
+        <button
+          id="nav-account-trigger"
+          type="button"
+          aria-haspopup="true"
+          aria-expanded="false"
+          class="flex items-center gap-2 rounded-full bg-lime py-1.5 pl-2 pr-3.5 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark"
+        >
+          <span id="nav-account-initial" class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-navy text-[12px] font-bold text-lime"></span>
+          <span class="hidden sm:inline">My account</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0">
+            <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <div
+          id="nav-account-dropdown"
+          hidden
+          class="absolute right-0 top-[calc(100%+10px)] w-64 rounded-2xl bg-white p-2 shadow-[0_25px_60px_-20px_rgba(11,20,84,0.45)]"
+        >
+          <div class="px-3 py-2.5">
+            <p class="text-[13px] font-semibold text-ink">My Account</p>
+            <p id="nav-account-email" class="mt-0.5 truncate text-[12px] text-ink-faint"></p>
+          </div>
+          <div class="my-1 border-t border-line"></div>
+          <a href="/account" class="block rounded-lg px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-bg-soft">Dashboard</a>
+          <a href="/account/billing" class="block rounded-lg px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-bg-soft">Billing</a>
+          <a href="/settings" class="block rounded-lg px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-bg-soft">Account settings</a>
+          <a id="nav-account-admin-link" href="/admin" hidden class="block rounded-lg px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-bg-soft">Admin</a>
+          <a href="/contact" class="block rounded-lg px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-bg-soft">Help &amp; support</a>
+          <div class="my-1 border-t border-line"></div>
+          <button id="nav-account-signout" type="button" class="block w-full rounded-lg px-3 py-2 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  </header>
+</div>
+
+<script>
+  import { apiFetch } from "../lib/api";
+  import { clearAccessToken, getImpersonatorId, getTokenEmail, getTokenRole, isAuthenticated } from "../lib/session";
+
+  if (isAuthenticated()) {
+    document.querySelector<HTMLAnchorElement>("#nav-signed-out")?.setAttribute("hidden", "");
+    document.querySelector<HTMLAnchorElement>("#nav-signup")?.setAttribute("hidden", "");
+
+    const accountMenu = document.querySelector<HTMLDivElement>("#nav-account-menu");
+    const accountTrigger = document.querySelector<HTMLButtonElement>("#nav-account-trigger");
+    const accountDropdown = document.querySelector<HTMLDivElement>("#nav-account-dropdown");
+    const accountEmail = document.querySelector<HTMLParagraphElement>("#nav-account-email");
+    const accountInitial = document.querySelector<HTMLSpanElement>("#nav-account-initial");
+    const signoutButton = document.querySelector<HTMLButtonElement>("#nav-account-signout");
+
+    if (accountMenu && accountTrigger && accountDropdown) {
+      accountMenu.removeAttribute("hidden");
+      const email = getTokenEmail();
+      if (accountEmail) accountEmail.textContent = email ?? "";
+      if (accountInitial) accountInitial.textContent = (email?.trim()[0] ?? "?").toUpperCase();
+
+      function closeDropdown(): void {
+        accountDropdown!.hidden = true;
+        accountTrigger!.setAttribute("aria-expanded", "false");
+      }
+
+      accountTrigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const willOpen = accountDropdown!.hidden;
+        accountDropdown!.hidden = !willOpen;
+        accountTrigger!.setAttribute("aria-expanded", String(willOpen));
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!accountDropdown!.hidden && !accountMenu!.contains(event.target as Node)) {
+          closeDropdown();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !accountDropdown!.hidden) closeDropdown();
+      });
+    }
+
+    signoutButton?.addEventListener("click", async () => {
+      // Best-effort: the API reads the refresh-token cookie to revoke the
+      // server-side session, but that cookie can never have reached this
+      // origin in the first place (see session.ts) — this call mostly just
+      // returns { message: 'Logged out' } as a no-op. The real sign-out is
+      // clearing the token client-side, which happens regardless.
+      try {
+        await apiFetch("/auth/logout", { method: "POST" });
+      } catch {
+        // Ignore — signing out client-side must succeed either way.
+      }
+      clearAccessToken();
+      window.location.href = "/";
+    });
+
+    const role = getTokenRole();
+    if (role === "ADMIN" || role === "SUPER_ADMIN") {
+      document.querySelector<HTMLAnchorElement>("#nav-account-admin-link")?.removeAttribute("hidden");
+    }
+
+    const impersonatorId = getImpersonatorId();
+    if (impersonatorId) {
+      const banner = document.querySelector<HTMLDivElement>("#impersonation-banner");
+      const bannerText = document.querySelector<HTMLSpanElement>("#impersonation-banner-text");
+      const exitButton = document.querySelector<HTMLButtonElement>("#impersonation-exit");
+      if (banner && bannerText && exitButton) {
+        bannerText.textContent = `Viewing as ${getTokenEmail() ?? "this user"}`;
+        banner.hidden = false;
+        exitButton.addEventListener("click", () => {
+          clearAccessToken();
+          // Closes the tab if it was opened via window.open (the normal
+          // path, from admin/users.astro) — a no-op otherwise, in which
+          // case the redirect below is what actually runs.
+          window.close();
+          window.location.href = "/signin";
+        });
+      }
+    }
+  }
+</script>

@@ -1,0 +1,64 @@
+---
+const faqs = [
+  {
+    q: "Is conference.contact live yet?",
+    a: "Yes — conference.contact is live now. Sign up and you're searching the full directory within minutes.",
+  },
+  {
+    q: "Where does the data come from?",
+    a: "Every record starts from a public source tied to a real event — a printed program, a speaker roster, a sponsor or exhibitor list — and is checked by hand before it's added. No scraped dumps, no third-party data brokers.",
+  },
+  {
+    q: "What's included in a record?",
+    a: "Name, current title and company, a verified email, LinkedIn, and a direct phone number where one is publicly available.",
+  },
+  {
+    q: "Can I export what I find?",
+    a: "Yes — CSV export is included from day one. A direct CRM push is on the roadmap.",
+  },
+  {
+    q: "How is the price decided, and will it change?",
+    a: "The rate above is our standard plan. If we ever raise prices, anyone already subscribed keeps their current rate.",
+  },
+  {
+    q: "Do I need to sign a contract?",
+    a: "No. You're billed $50 every 6 months, with your rate locked in for as long as you stay subscribed. You can cancel anytime.",
+  },
+  {
+    q: "Do you offer refunds?",
+    a: "No — all sales are final. You can cancel anytime to stop future billing, and you'll keep access through the end of your current period.",
+  },
+];
+---
+
+<section id="faq" class="bg-white px-5 py-20 sm:px-8 sm:py-28">
+  <div class="mx-auto max-w-3xl">
+    <p class="text-[13px] font-semibold uppercase tracking-wide text-navy">FAQ</p>
+    <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+      Common questions.
+    </h2>
+
+    <div class="mt-10 divide-y divide-line rounded-2xl bg-bg-soft">
+      {
+        faqs.map((item) => (
+          <details class="group px-6 py-1">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[15px] font-semibold text-ink marker:content-none">
+              {item.q}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                class="shrink-0 text-navy transition-transform group-open:rotate-45"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+              </svg>
+            </summary>
+            <p class="max-w-2xl pb-5 text-[14px] leading-relaxed text-ink-soft">{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
