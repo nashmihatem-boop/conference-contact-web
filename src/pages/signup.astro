@@ -140,8 +140,9 @@ const highlights = [
         </p>
 
         <form id="code-form" hidden class="mt-7 flex flex-col gap-4">
-          <p id="code-instructions" class="text-[13px] leading-relaxed text-ink-soft">
-            We don't recognize this device — enter the code we emailed you to continue.
+          <h2 id="code-heading" class="font-display text-2xl font-extrabold tracking-tight text-ink">Check your email</h2>
+          <p id="code-instructions" class="-mt-2 text-[13px] leading-relaxed text-ink-soft">
+            We just sent a 6-digit code to your inbox — enter it below to continue.
           </p>
           <div>
             <label for="code-input" class="mb-1.5 block text-[13px] font-semibold text-ink">Verification code</label>
@@ -165,7 +166,7 @@ const highlights = [
           >
             Continue to payment →
           </button>
-          <p class="text-center text-[13px] text-ink-soft">
+          <p id="code-resend-line" class="text-center text-[13px] text-ink-soft">
             Didn't get a code?
             <button
               id="code-resend"
@@ -214,9 +215,11 @@ const highlights = [
   });
 
   const codeForm = document.querySelector<HTMLFormElement>("#code-form")!;
+  const codeHeading = document.querySelector<HTMLHeadingElement>("#code-heading")!;
   const codeInstructions = document.querySelector<HTMLParagraphElement>("#code-instructions")!;
   const codeSubmit = document.querySelector<HTMLButtonElement>("#code-submit")!;
   const codeResend = document.querySelector<HTMLButtonElement>("#code-resend")!;
+  const codeResendLine = document.querySelector<HTMLParagraphElement>("#code-resend-line")!;
 
   let pendingChallengeToken: string | null = null;
   let pendingEmail = "";
@@ -265,16 +268,18 @@ const highlights = [
 
     if (result.requiresVerification && result.method && result.challengeToken) {
       pendingChallengeToken = result.challengeToken;
-      codeInstructions.textContent =
-        result.method === "TOTP"
-          ? "Enter the 6-digit code from your authenticator app."
-          : "We don't recognize this device — enter the code we emailed you to continue.";
+      const isEmailCode = result.method === "EMAIL_CODE";
+      codeHeading.textContent = isEmailCode ? "Check your email" : "Enter your code";
+      codeInstructions.textContent = isEmailCode
+        ? "We just sent a 6-digit code to your inbox — enter it below to continue."
+        : "Enter the 6-digit code from your authenticator app.";
+      codeResendLine.hidden = !isEmailCode;
       form.hidden = true;
       heading.hidden = true;
       intro.hidden = true;
       legal.hidden = true;
       codeForm.hidden = false;
-      startResendCooldown();
+      if (isEmailCode) startResendCooldown();
     }
   }
 

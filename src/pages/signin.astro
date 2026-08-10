@@ -109,8 +109,9 @@ const highlights = [
         </form>
 
         <form id="code-form" hidden class="mt-7 flex flex-col gap-4">
-          <p id="code-instructions" class="text-[13px] leading-relaxed text-ink-soft">
-            We don't recognize this device — enter the code we emailed you to finish signing in.
+          <h2 id="code-heading" class="font-display text-2xl font-extrabold tracking-tight text-ink">Check your email</h2>
+          <p id="code-instructions" class="-mt-2 text-[13px] leading-relaxed text-ink-soft">
+            We just sent a 6-digit code to your inbox — enter it below to finish signing in.
           </p>
           <div>
             <label for="code-input" class="mb-1.5 block text-[13px] font-semibold text-ink">Verification code</label>
@@ -134,7 +135,7 @@ const highlights = [
           >
             Verify →
           </button>
-          <p class="text-center text-[13px] text-ink-soft">
+          <p id="code-resend-line" class="text-center text-[13px] text-ink-soft">
             Didn't get a code?
             <button
               id="code-resend"
@@ -194,10 +195,12 @@ const highlights = [
   });
 
   const codeForm = document.querySelector<HTMLFormElement>("#code-form")!;
+  const codeHeading = document.querySelector<HTMLHeadingElement>("#code-heading")!;
   const codeInstructions = document.querySelector<HTMLParagraphElement>("#code-instructions")!;
   const codeSubmit = document.querySelector<HTMLButtonElement>("#code-submit")!;
   const codeBack = document.querySelector<HTMLButtonElement>("#code-back")!;
   const codeResend = document.querySelector<HTMLButtonElement>("#code-resend")!;
+  const codeResendLine = document.querySelector<HTMLParagraphElement>("#code-resend-line")!;
 
   let pendingChallengeToken: string | null = null;
   let resendInterval: ReturnType<typeof setInterval> | null = null;
@@ -238,16 +241,18 @@ const highlights = [
 
   function showCodeStep(method: "EMAIL_CODE" | "TOTP", challengeToken: string) {
     pendingChallengeToken = challengeToken;
-    codeInstructions.textContent =
-      method === "TOTP"
-        ? "Enter the 6-digit code from your authenticator app."
-        : "We don't recognize this device — enter the code we emailed you to finish signing in.";
+    const isEmailCode = method === "EMAIL_CODE";
+    codeHeading.textContent = isEmailCode ? "Check your email" : "Enter your code";
+    codeInstructions.textContent = isEmailCode
+      ? "We just sent a 6-digit code to your inbox — enter it below to finish signing in."
+      : "Enter the 6-digit code from your authenticator app.";
+    codeResendLine.hidden = !isEmailCode;
     loginForm.hidden = true;
     heading.hidden = true;
     intro.hidden = true;
     forgotLink.hidden = true;
     codeForm.hidden = false;
-    startResendCooldown();
+    if (isEmailCode) startResendCooldown();
   }
 
   function goToAccount() {
