@@ -10,7 +10,7 @@ import AdminNav from "../../components/AdminNav.astro";
 
   <div class="mx-auto max-w-[1600px] px-5 py-10 sm:px-8">
     <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Prospects</h1>
-    <p class="mt-1 text-[14px] text-ink-soft">Signed-up users who've never bought the Directory subscription. Oldest signups first.</p>
+    <p class="mt-1 text-[14px] text-ink-soft">Signed-up users without active Directory access — never subscribed, canceled, or overdue. Oldest signups first.</p>
     <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
 
     <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
@@ -41,6 +41,9 @@ import AdminNav from "../../components/AdminNav.astro";
               <th class="px-4 py-3 font-semibold">Signed up</th>
               <th class="px-4 py-3 font-semibold">Days since signup</th>
               <th class="px-4 py-3 font-semibold">Last login</th>
+              <th class="px-4 py-3 font-semibold">Canceled</th>
+              <th class="px-4 py-3 font-semibold">Paid</th>
+              <th class="px-4 py-3 font-semibold">Overdue</th>
               <th class="px-4 py-3 font-semibold">Send a pitch</th>
             </tr>
           </thead>
@@ -72,6 +75,9 @@ import AdminNav from "../../components/AdminNav.astro";
     createdAt: string;
     lastLoginAt: string | null;
     daysSinceSignup: number;
+    canceled: boolean;
+    paid: boolean;
+    overdue: boolean;
   }
   interface ProspectsPage {
     data: Prospect[];
@@ -121,6 +127,9 @@ import AdminNav from "../../components/AdminNav.astro";
         <td class="px-4 py-3 text-[13px] text-ink-soft whitespace-nowrap">${formatDate(prospect.createdAt)}</td>
         <td class="px-4 py-3 text-[13px] text-ink-soft">${prospect.daysSinceSignup}</td>
         <td class="px-4 py-3 text-[13px] text-ink-soft whitespace-nowrap">${formatDate(prospect.lastLoginAt)}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${prospect.canceled ? "Yes" : "No"}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${prospect.paid ? "Yes" : "No"}</td>
+        <td class="px-4 py-3 text-[13px] text-ink-soft">${prospect.overdue ? "Yes" : "No"}</td>
         <td class="px-4 py-3">
           <div class="flex flex-wrap items-center gap-1.5">
             ${pitchButtons}
@@ -132,7 +141,7 @@ import AdminNav from "../../components/AdminNav.astro";
 
   function renderRows(prospects: Prospect[]): void {
     if (prospects.length === 0) {
-      resultsBody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">No prospects match these filters — everyone here has either subscribed or hasn't signed up yet.</td></tr>`;
+      resultsBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-[13px] text-ink-faint">No prospects match these filters — everyone here has active Directory access or hasn't signed up yet.</td></tr>`;
       return;
     }
     resultsBody.innerHTML = prospects.map(rowHtml).join("");
