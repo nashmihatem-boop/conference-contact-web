@@ -8,7 +8,7 @@ export interface Lead {
   appLink: string | null;
   email: string | null;
   phone: string | null;
-  companyType: string;
+  companyType: string | null;
   likelyToAttend: string;
 }
 
@@ -24,8 +24,9 @@ function initials(name: string): string {
   return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
 }
 
-/** "SOLUTION_PROVIDER" -> "Solution Provider" — the raw enum value is never shown as-is. */
-export function formatCompanyType(companyType: string): string {
+/** "SOLUTION_PROVIDER" -> "Solution Provider" — the raw enum value is never shown as-is. A handful of real rows have no category on file at all. */
+export function formatCompanyType(companyType: string | null): string {
+  if (!companyType) return "Unclassified";
   return companyType
     .split("_")
     .map((word) => word.charAt(0) + word.slice(1).toLowerCase())

@@ -33,8 +33,9 @@ import AdminNav from "../../components/AdminNav.astro";
             <input id="field-company" maxlength="200" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none" />
           </div>
           <div>
-            <label for="field-company-type" class="mb-1.5 block text-[13px] font-semibold text-ink">Type of company *</label>
-            <select id="field-company-type" required class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none">
+            <label for="field-company-type" class="mb-1.5 block text-[13px] font-semibold text-ink">Type of company</label>
+            <select id="field-company-type" class="w-full rounded-xl border-2 border-line px-3 py-2 text-[14px] text-ink focus:border-navy focus:outline-none">
+              <option value="">Unclassified</option>
               <option value="ADVERTISER">Advertiser</option>
               <option value="AD_NETWORK">Ad Network</option>
               <option value="AFFILIATE">Affiliate</option>
@@ -167,7 +168,7 @@ import AdminNav from "../../components/AdminNav.astro";
     appLink: string | null;
     email: string | null;
     phone: string | null;
-    companyType: string;
+    companyType: string | null;
     likelyToAttend: string;
     approved: boolean;
     submittedBy: { id: string; email: string; fullName: string } | null;
@@ -309,7 +310,7 @@ import AdminNav from "../../components/AdminNav.astro";
 
   function resetForm(): void {
     form.reset();
-    fieldCompanyType.value = "ADVERTISER";
+    fieldCompanyType.value = "";
     fieldLikelyCustom.hidden = true;
     fieldLikelyCustom.value = "";
   }
@@ -348,7 +349,7 @@ import AdminNav from "../../components/AdminNav.astro";
     fieldName.value = lead.name;
     fieldTitle.value = lead.title ?? "";
     fieldCompany.value = lead.company ?? "";
-    fieldCompanyType.value = lead.companyType;
+    fieldCompanyType.value = lead.companyType ?? "";
     setLikelyToAttend(lead.likelyToAttend);
     fieldEmail.value = lead.email ?? "";
     fieldPhone.value = lead.phone ?? "";
@@ -379,7 +380,7 @@ import AdminNav from "../../components/AdminNav.astro";
 
     const body: Record<string, string | undefined> = {
       name: fieldName.value.trim(),
-      companyType: fieldCompanyType.value,
+      companyType: fieldCompanyType.value || undefined,
       likelyToAttend,
       title: fieldTitle.value.trim() || undefined,
       company: fieldCompany.value.trim() || undefined,
