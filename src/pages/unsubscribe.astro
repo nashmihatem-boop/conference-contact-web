@@ -1,0 +1,101 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Unsubscribe — conference.contact" noindex>
+  <div class="flex min-h-screen items-center justify-center bg-bg-soft px-6 py-16">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-8 text-center">
+      <a href="/" class="inline-flex items-center gap-2 text-lg font-extrabold tracking-tight text-navy">
+        <svg viewBox="0 0 96 96" class="h-7 w-7 shrink-0" aria-hidden="true">
+          <rect width="96" height="96" rx="26" fill="#C3DB42" />
+          <rect x="16" y="26" width="64" height="44" rx="9" fill="#0D1448" />
+          <circle cx="33" cy="44" r="8" fill="#C3DB42" />
+          <path d="M 22 62 a 11 11 0 0 1 22 0 z" fill="#C3DB42" />
+          <rect x="49" y="38" width="23" height="5.5" rx="2.75" fill="#C3DB42" />
+          <rect x="49" y="49" width="16" height="5" rx="2.5" fill="#FFFFFF" opacity="0.85" />
+          <circle cx="72" cy="66" r="13" fill="#C3DB42" />
+          <path d="M 66.5 66 l 4 4 l 7.5 -8.5" stroke="#0D1448" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+        <span>conference<span class="text-lime">.</span>contact</span>
+      </a>
+
+      <div id="unsub-confirm" class="mt-8">
+        <p class="text-[15px] font-semibold text-ink">Unsubscribe</p>
+        <p id="unsub-email-line" class="mt-2 text-[13px] leading-relaxed text-ink-soft"></p>
+        <button
+          id="unsub-button"
+          type="button"
+          class="mt-6 block w-full rounded-xl bg-navy py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-navy-mid"
+        >
+          Unsubscribe me
+        </button>
+      </div>
+
+      <div id="unsub-success" hidden class="mt-8">
+        <p class="text-[15px] font-semibold text-ink">You're unsubscribed</p>
+        <p id="unsub-success-message" class="mt-2 text-[13px] leading-relaxed text-ink-soft">
+          You won't get any more invite emails from conference.contact.
+        </p>
+        <a
+          href="/"
+          class="mt-6 block rounded-xl bg-navy py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-navy-mid"
+        >
+          Back to conference.contact →
+        </a>
+      </div>
+
+      <div id="unsub-error" hidden class="mt-8">
+        <p class="text-[15px] font-semibold text-ink">This link didn't work</p>
+        <p id="unsub-error-message" class="mt-2 text-[13px] leading-relaxed text-ink-soft">
+          It may be missing some information — try clicking the link in the email again.
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { apiFetch, ApiError } from "../lib/api";
+
+  const confirmState = document.querySelector<HTMLDivElement>("#unsub-confirm")!;
+  const emailLine = document.querySelector<HTMLParagraphElement>("#unsub-email-line")!;
+  const button = document.querySelector<HTMLButtonElement>("#unsub-button")!;
+  const successState = document.querySelector<HTMLDivElement>("#unsub-success")!;
+  const errorState = document.querySelector<HTMLDivElement>("#unsub-error")!;
+  const errorMessage = document.querySelector<HTMLParagraphElement>("#unsub-error-message")!;
+
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get("email");
+  const token = params.get("token");
+
+  // Deliberately no request fires on page load — only a real click does.
+  // Corporate mail scanners and Outlook Safe Links prefetch every URL in an
+  // email (including this one) before a person ever opens it; if loading
+  // this page alone triggered the unsubscribe, those automated prefetches
+  // would silently unsubscribe people who never asked to be.
+  if (!email || !token) {
+    confirmState.hidden = true;
+    errorState.hidden = false;
+  } else {
+    emailLine.textContent = `Stop sending prospect invite emails to ${email}?`;
+  }
+
+  button.addEventListener("click", async () => {
+    if (!email || !token) return;
+    button.disabled = true;
+    button.textContent = "Unsubscribing…";
+    try {
+      await apiFetch<{ message: string }>("/unsubscribe", {
+        method: "POST",
+        body: JSON.stringify({ email, token }),
+      });
+      confirmState.hidden = true;
+      successState.hidden = false;
+    } catch (err) {
+      errorMessage.textContent =
+        err instanceof ApiError ? err.message : "Something went wrong — try clicking the link in the email again.";
+      confirmState.hidden = true;
+      errorState.hidden = false;
+    }
+  });
+</script>
