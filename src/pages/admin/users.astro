@@ -11,9 +11,14 @@ import AdminNav from "../../components/AdminNav.astro";
   <div class="mx-auto max-w-[1600px] px-5 py-10 sm:px-8">
     <div class="flex items-center justify-between gap-3">
       <h1 class="font-display text-2xl font-extrabold tracking-tight text-ink">Users</h1>
-      <button id="invite-toggle" type="button" class="whitespace-nowrap rounded-lg bg-navy px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">
-        + Invite user
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="prospect-invite-toggle" type="button" class="whitespace-nowrap rounded-lg border border-line px-4 py-2 text-[13px] font-semibold text-navy transition-colors hover:border-navy">
+          + Invite prospect
+        </button>
+        <button id="invite-toggle" type="button" class="whitespace-nowrap rounded-lg bg-navy px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">
+          + Invite user
+        </button>
+      </div>
     </div>
     <p id="total-count" class="mt-1 text-[14px] text-ink-soft"></p>
 
@@ -36,10 +41,28 @@ import AdminNav from "../../components/AdminNav.astro";
           <input id="invite-grant-access" type="checkbox" checked class="h-4 w-4 rounded border-line" />
           Grant Directory access (no subscription needed)
         </label>
+        <label class="flex items-center gap-2 pb-2.5 text-[13px] text-ink-soft">
+          <input id="invite-grant-lead-finder" type="checkbox" class="h-4 w-4 rounded border-line" />
+          Grant Lead Finder unlimited access
+        </label>
         <button id="invite-submit" type="button" class="rounded-lg bg-lime px-4 py-2 text-[13px] font-bold text-navy-dark transition-colors hover:bg-lime-dark">Send invite</button>
         <button id="invite-cancel" type="button" class="px-2 py-2 text-[13px] font-medium text-ink-soft hover:text-ink">Cancel</button>
       </div>
       <p id="invite-status" class="mt-2 text-[13px]"></p>
+    </div>
+
+    <div id="prospect-invite-panel" hidden class="mt-4 rounded-2xl border border-line bg-white p-5">
+      <p class="text-[14px] font-semibold text-ink">Invite a prospect</p>
+      <p class="mt-1 text-[13px] text-ink-soft">For people who haven't signed up yet — sends a pitch email with a link to a landing page, then a normal signup. Grants nothing.</p>
+      <div class="mt-4 flex flex-wrap items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <label for="prospect-invite-email" class="text-[12px] font-medium text-ink-soft">Email</label>
+          <input id="prospect-invite-email" type="email" autocomplete="off" placeholder="name@company.com" class="w-64 rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
+        </div>
+        <button id="prospect-invite-submit" type="button" class="rounded-lg bg-lime px-4 py-2 text-[13px] font-bold text-navy-dark transition-colors hover:bg-lime-dark">Send invite</button>
+        <button id="prospect-invite-cancel" type="button" class="px-2 py-2 text-[13px] font-medium text-ink-soft hover:text-ink">Cancel</button>
+      </div>
+      <p id="prospect-invite-status" class="mt-2 text-[13px]"></p>
     </div>
 
     <div id="admin-error" hidden class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"></div>
@@ -85,6 +108,7 @@ import AdminNav from "../../components/AdminNav.astro";
               <th class="px-4 py-3 font-semibold"><button type="button" data-sort="role" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Role <span data-sort-indicator class="text-[10px]"></span></button></th>
               <th class="px-4 py-3 font-semibold"><button type="button" data-sort="status" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Status <span data-sort-indicator class="text-[10px]"></span></button></th>
               <th class="px-4 py-3 font-semibold">Directory</th>
+              <th class="px-4 py-3 font-semibold">Lead Finder</th>
               <th class="px-4 py-3 font-semibold"><button type="button" data-sort="emailVerifiedAt" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Verified <span data-sort-indicator class="text-[10px]"></span></button></th>
               <th class="px-4 py-3 font-semibold"><button type="button" data-sort="leadFinderCredits" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Credits <span data-sort-indicator class="text-[10px]"></span></button></th>
               <th class="px-4 py-3 font-semibold"><button type="button" data-sort="creditsPurchased" class="flex items-center gap-1 font-semibold uppercase tracking-wide text-ink-faint hover:text-ink">Purchased <span data-sort-indicator class="text-[10px]"></span></button></th>
@@ -129,6 +153,7 @@ import AdminNav from "../../components/AdminNav.astro";
     creditsPurchased: number;
     lifetimePaidCents: number;
     adminGrantedDirectoryAccess: boolean;
+    adminGrantedLeadFinderAccess: boolean;
   }
   interface UsersPage {
     data: AdminUser[];
@@ -265,6 +290,11 @@ import AdminNav from "../../components/AdminNav.astro";
           ? `<button type="button" data-action="revoke-directory-access" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-ink-soft hover:text-ink">Revoke Directory access</button>`
           : `<button type="button" data-action="grant-directory-access" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-navy hover:text-navy-mid">Grant Directory access</button>`,
       );
+      actions.push(
+        user.adminGrantedLeadFinderAccess
+          ? `<button type="button" data-action="revoke-lead-finder-access" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-ink-soft hover:text-ink">Revoke Lead Finder access</button>`
+          : `<button type="button" data-action="grant-lead-finder-access" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-navy hover:text-navy-mid">Grant Lead Finder access</button>`,
+      );
       actions.push(`<button type="button" data-action="delete" data-id="${escapeHtml(user.id)}" class="whitespace-nowrap text-[12px] font-medium text-red-600 hover:text-red-700">Delete account</button>`);
     }
 
@@ -277,6 +307,7 @@ import AdminNav from "../../components/AdminNav.astro";
         <td class="px-4 py-3 text-[13px] text-ink-soft">${escapeHtml(roleLabel(user.role))}</td>
         <td class="px-4 py-3">${statusBadge(user.status)}</td>
         <td class="px-4 py-3">${user.adminGrantedDirectoryAccess ? `<span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[11px] font-medium text-navy">Comp'd</span>` : `<span class="text-[13px] text-ink-faint">—</span>`}</td>
+        <td class="px-4 py-3">${user.adminGrantedLeadFinderAccess ? `<span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[11px] font-medium text-navy">Unlimited</span>` : `<span class="text-[13px] text-ink-faint">—</span>`}</td>
         <td class="px-4 py-3 text-[13px] text-ink-soft">${user.emailVerifiedAt ? "Yes" : "No"}</td>
         <td class="px-4 py-3 text-[13px] text-ink-soft">${user.leadFinderCredits.toLocaleString()}</td>
         <td class="px-4 py-3 text-[13px] text-ink-soft">${user.creditsPurchased.toLocaleString()}</td>
@@ -289,7 +320,7 @@ import AdminNav from "../../components/AdminNav.astro";
 
   function renderRows(users: AdminUser[]): void {
     if (users.length === 0) {
-      resultsBody.innerHTML = `<tr><td colspan="11" class="px-4 py-8 text-center text-[13px] text-ink-faint">No users match these filters.</td></tr>`;
+      resultsBody.innerHTML = `<tr><td colspan="12" class="px-4 py-8 text-center text-[13px] text-ink-faint">No users match these filters.</td></tr>`;
       return;
     }
     resultsBody.innerHTML = users.map(rowHtml).join("");
@@ -312,6 +343,8 @@ import AdminNav from "../../components/AdminNav.astro";
       "send-password-reset": "Send a password reset link to this user's email?",
       "grant-directory-access": "Grant this user full Lead Directory access, no subscription required?",
       "revoke-directory-access": "Revoke this user's comped Directory access?",
+      "grant-lead-finder-access": "Grant this user unlimited AI Lead Finder searches, no subscription or credits required?",
+      "revoke-lead-finder-access": "Revoke this user's unlimited Lead Finder access?",
     };
     if (!window.confirm(confirmText[action])) return;
 
@@ -336,6 +369,11 @@ import AdminNav from "../../components/AdminNav.astro";
         await authFetch(`/admin/users/${id}/directory-access`, {
           method: "PATCH",
           body: JSON.stringify({ granted: action === "grant-directory-access" }),
+        });
+      } else if (action === "grant-lead-finder-access" || action === "revoke-lead-finder-access") {
+        await authFetch(`/admin/users/${id}/lead-finder-access`, {
+          method: "PATCH",
+          body: JSON.stringify({ granted: action === "grant-lead-finder-access" }),
         });
       } else if (action === "suspend") {
         const reason = window.prompt("Reason (optional, recorded on the audit log):") ?? undefined;
@@ -380,6 +418,7 @@ import AdminNav from "../../components/AdminNav.astro";
   const inviteEmail = document.querySelector<HTMLInputElement>("#invite-email")!;
   const inviteRole = document.querySelector<HTMLSelectElement>("#invite-role")!;
   const inviteGrantAccess = document.querySelector<HTMLInputElement>("#invite-grant-access")!;
+  const inviteGrantLeadFinder = document.querySelector<HTMLInputElement>("#invite-grant-lead-finder")!;
   const inviteSubmit = document.querySelector<HTMLButtonElement>("#invite-submit")!;
   const inviteCancel = document.querySelector<HTMLButtonElement>("#invite-cancel")!;
   const inviteStatus = document.querySelector<HTMLParagraphElement>("#invite-status")!;
@@ -389,6 +428,7 @@ import AdminNav from "../../components/AdminNav.astro";
     inviteEmail.value = "";
     inviteRole.value = "USER";
     inviteGrantAccess.checked = true;
+    inviteGrantLeadFinder.checked = false;
     inviteStatus.textContent = "";
     inviteStatus.className = "mt-2 text-[13px]";
   }
@@ -416,6 +456,7 @@ import AdminNav from "../../components/AdminNav.astro";
           email,
           role: inviteRole.value,
           grantDirectoryAccess: inviteGrantAccess.checked,
+          grantLeadFinderAccess: inviteGrantLeadFinder.checked,
         }),
       });
       inviteStatus.textContent = result.message;
@@ -426,6 +467,52 @@ import AdminNav from "../../components/AdminNav.astro";
       handleAdminError(err, errorBanner);
     } finally {
       inviteSubmit.disabled = false;
+    }
+  });
+
+  const prospectInviteToggle = document.querySelector<HTMLButtonElement>("#prospect-invite-toggle")!;
+  const prospectInvitePanel = document.querySelector<HTMLDivElement>("#prospect-invite-panel")!;
+  const prospectInviteEmail = document.querySelector<HTMLInputElement>("#prospect-invite-email")!;
+  const prospectInviteSubmit = document.querySelector<HTMLButtonElement>("#prospect-invite-submit")!;
+  const prospectInviteCancel = document.querySelector<HTMLButtonElement>("#prospect-invite-cancel")!;
+  const prospectInviteStatus = document.querySelector<HTMLParagraphElement>("#prospect-invite-status")!;
+
+  function closeProspectInvitePanel(): void {
+    prospectInvitePanel.hidden = true;
+    prospectInviteEmail.value = "";
+    prospectInviteStatus.textContent = "";
+    prospectInviteStatus.className = "mt-2 text-[13px]";
+  }
+
+  prospectInviteToggle.addEventListener("click", () => {
+    prospectInvitePanel.hidden = !prospectInvitePanel.hidden;
+    if (!prospectInvitePanel.hidden) prospectInviteEmail.focus();
+  });
+  prospectInviteCancel.addEventListener("click", closeProspectInvitePanel);
+
+  prospectInviteSubmit.addEventListener("click", async () => {
+    const email = prospectInviteEmail.value.trim();
+    if (!email) {
+      prospectInviteStatus.textContent = "Enter an email first.";
+      prospectInviteStatus.className = "mt-2 text-[13px] text-red-600";
+      return;
+    }
+    prospectInviteSubmit.disabled = true;
+    prospectInviteStatus.textContent = "Sending…";
+    prospectInviteStatus.className = "mt-2 text-[13px] text-ink-soft";
+    try {
+      const result = await authFetch<{ message: string }>("/admin/prospects/invite", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      prospectInviteStatus.textContent = result.message;
+      prospectInviteStatus.className = "mt-2 text-[13px] text-navy";
+      setTimeout(closeProspectInvitePanel, 2000);
+    } catch (err) {
+      prospectInviteStatus.textContent = "";
+      handleAdminError(err, errorBanner);
+    } finally {
+      prospectInviteSubmit.disabled = false;
     }
   });
 

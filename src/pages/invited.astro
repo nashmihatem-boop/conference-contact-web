@@ -1,0 +1,84 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import SearchDemo from "../components/SearchDemo.astro";
+import Features from "../components/Features.astro";
+import Footer from "../components/Footer.astro";
+import Wave from "../components/Wave.astro";
+
+const highlights = [
+  {
+    stat: "21,744",
+    label: "Verified contacts — real name, title, company, and email, hand-checked across 6 company types.",
+  },
+  {
+    stat: "8",
+    label: "Major B2B conferences covered, including Affiliate Summit East/West, Leadscon, and MAU Vegas.",
+  },
+];
+---
+
+<Layout
+  title="You're invited — conference.contact"
+  description="You've been personally invited to check out the verified conference contact directory."
+  noindex
+>
+  <Nav />
+
+  <section class="relative overflow-hidden bg-navy px-5 pt-16 pb-20 sm:px-8 sm:pt-24 sm:pb-28">
+    <div class="navy-dots pointer-events-none absolute inset-0" aria-hidden="true"></div>
+
+    <div class="relative mx-auto max-w-2xl text-center">
+      <p class="text-[13px] font-semibold uppercase tracking-wide text-lime">Personal invite</p>
+      <h1 class="mt-3 font-display text-[2.25rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl">
+        You've been invited to see<br class="hidden sm:block" />
+        <span class="text-lime">conference.contact</span>
+      </h1>
+      <p class="mx-auto mt-5 max-w-lg text-[16px] leading-relaxed text-white/70">
+        A hand-verified directory of who actually shows up to the B2B
+        conference circuit, plus an AI tool that finds and enriches new leads
+        live. Take a look below — no obligation, no sales call.
+      </p>
+
+      <a
+        id="invited-cta"
+        href="/signup"
+        class="mt-8 inline-block rounded-full bg-lime px-8 py-3.5 text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark"
+      >
+        Create your free account →
+      </a>
+      <p class="mt-3 text-[13px] text-white/50">
+        Already have an account? <a href="/signin" class="text-lime hover:text-lime-dark">Sign in</a>
+      </p>
+
+      <div class="mx-auto mt-10 grid max-w-lg grid-cols-2 gap-3">
+        {
+          highlights.map((h) => (
+            <div class="rounded-2xl border border-white/15 bg-white/10 p-5 text-left backdrop-blur-sm">
+              <span class="block font-display text-2xl font-extrabold text-lime sm:text-3xl">{h.stat}</span>
+              <p class="mt-1.5 text-[12px] leading-relaxed text-white/80">{h.label}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+  <Wave before="var(--color-navy)" after="var(--color-bg-soft)" />
+
+  <SearchDemo />
+  <Features />
+
+  <Footer />
+</Layout>
+
+<script>
+  // Arrives from a prospect-invite email (see AdminService.inviteProspect),
+  // which always builds this page's link as /invited?email=... — carrying
+  // that straight through to signup means one less field for them to type,
+  // and the account they create matches the address the invite went to.
+  const email = new URLSearchParams(window.location.search).get("email");
+  const cta = document.querySelector<HTMLAnchorElement>("#invited-cta");
+  if (email && cta) {
+    cta.href = `/signup?email=${encodeURIComponent(email)}`;
+  }
+</script>

@@ -206,6 +206,16 @@ const highlights = [
   const passwordEye = document.querySelector<SVGElement>("#signup-password-eye")!;
   const passwordEyeOff = document.querySelector<SVGElement>("#signup-password-eye-off")!;
 
+  // Arrives prefilled from an admin invite or a prospect-invite email link
+  // (both build a /signup?email=... URL) — one less field to type, and it
+  // keeps the account that gets created matching the email the invite/comp
+  // was actually issued to.
+  const prefilledEmail = new URLSearchParams(window.location.search).get("email");
+  if (prefilledEmail) {
+    const emailInput = document.querySelector<HTMLInputElement>("#signup-email")!;
+    emailInput.value = prefilledEmail;
+  }
+
   passwordToggle.addEventListener("click", () => {
     const isHidden = passwordInput.type === "password";
     passwordInput.type = isHidden ? "text" : "password";
