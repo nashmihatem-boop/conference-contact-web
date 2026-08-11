@@ -262,7 +262,7 @@ const highlights = [
 
     if (!result.requiresVerification && result.accessToken) {
       saveAccessToken(result.accessToken);
-      await goToCheckout();
+      await finishSignup();
       return;
     }
 
@@ -289,6 +289,25 @@ const highlights = [
       body: JSON.stringify({ planSlug: "full-access" }),
     });
     window.location.href = url;
+  }
+
+  /**
+   * An admin invite with "grant Directory access" already gave this account
+   * real access at registration time (see AuthService.register consuming
+   * the pending AdminAccessInvite) — sending them into Stripe checkout
+   * anyway would be asking a comped user to pay. Checked here, right before
+   * redirecting, rather than earlier in the form, since there's no reliable
+   * signal client-side until the account actually exists.
+   */
+  async function finishSignup() {
+    const status = await authFetch<{ hasDirectoryAccess: boolean }>(
+      "/subscriptions/status",
+    );
+    if (status.hasDirectoryAccess) {
+      window.location.href = "/account";
+      return;
+    }
+    await goToCheckout();
   }
 
   form.addEventListener("submit", async (event) => {
@@ -342,7 +361,7 @@ const highlights = [
         }),
       });
       saveAccessToken(result.accessToken);
-      await goToCheckout();
+      await finishSignup();
     } catch (err) {
       showError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
       codeSubmit.disabled = false;
