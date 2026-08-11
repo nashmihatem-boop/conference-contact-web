@@ -30,7 +30,12 @@ const stats = [
     <div class="mt-12 grid gap-6 sm:grid-cols-3">
       {
         stats.map((stat) => (
-          <figure class="rounded-2xl bg-bg-soft p-6">
+          <figure class="relative rounded-2xl bg-bg-soft p-6">
+            {stat.label === "Verified contacts" && (
+              <span class="absolute -top-2.5 right-4 rounded-full bg-lime px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-navy-dark shadow-[0_6px_16px_-4px_rgba(195,219,66,0.6)]">
+                +3,187 today
+              </span>
+            )}
             <span class="block font-display text-4xl font-extrabold text-navy">{stat.number}</span>
             <figcaption class="mt-2">
               <span class="block text-[14px] font-semibold text-ink">{stat.label}</span>
