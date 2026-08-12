@@ -85,6 +85,17 @@ export async function authFetch<T>(
   }
 }
 
+// A page like account.astro fires several authFetch calls in parallel
+// (loadStatus(), loadInvites()) — if the stored access token is stale when
+// they all run, every one of them independently lands here at once. The
+// refresh token is single-use and rotates server-side on each call, so
+// without this, only the first of those concurrent requests would get a
+// token back; the rest would each present the same now-rotated-away token
+// and fail. Sharing one in-flight promise means concurrent callers within
+// this tab await the same network call and all receive the same result,
+// instead of racing each other against a one-time-use token.
+let inFlightRefresh: Promise<string | null> | null = null;
+
 /**
  * Exchanges the httpOnly refresh cookie for a fresh access token — no
  * credentials needed client-side, the browser just has to have the cookie.
@@ -93,13 +104,21 @@ export async function authFetch<T>(
  * "just isn't signed in," not an error to surface.
  */
 export async function refreshAccessToken(): Promise<string | null> {
-  try {
-    const result = await apiFetch<{ accessToken: string | null }>(
-      "/auth/refresh",
-      { method: "POST" },
-    );
-    return result.accessToken ?? null;
-  } catch {
-    return null;
-  }
+  if (inFlightRefresh) return inFlightRefresh;
+
+  inFlightRefresh = (async () => {
+    try {
+      const result = await apiFetch<{ accessToken: string | null }>(
+        "/auth/refresh",
+        { method: "POST" },
+      );
+      return result.accessToken ?? null;
+    } catch {
+      return null;
+    } finally {
+      inFlightRefresh = null;
+    }
+  })();
+
+  return inFlightRefresh;
 }
