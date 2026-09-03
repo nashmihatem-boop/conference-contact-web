@@ -107,6 +107,11 @@ import AdminNav from "../../components/AdminNav.astro";
               <label for="template-footnote" class="text-[12px] font-medium text-ink-soft">Footnote</label>
               <input id="template-footnote" type="text" maxlength="300" class="w-full rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
             </div>
+            <div class="flex flex-col gap-1">
+              <label for="template-mailing-address" class="text-[12px] font-medium text-ink-soft">Mailing address</label>
+              <input id="template-mailing-address" type="text" maxlength="300" class="w-full rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
+              <p class="text-[11px] text-ink-faint">CAN-SPAM requires a real postal address on every commercial email — leave this filled in with a real one.</p>
+            </div>
             <div class="mt-1 flex flex-wrap items-center gap-3">
               <button id="template-save" type="button" class="rounded-lg bg-navy px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">Save template</button>
               <p id="template-save-status" class="text-[13px]"></p>
@@ -123,8 +128,8 @@ import AdminNav from "../../components/AdminNav.astro";
                 <div style="max-width:380px;margin:0 auto;">
                   <table role="presentation" style="margin:0 auto 22px;" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td style="width:26px;height:26px;background-color:#c3db42;border-radius:7px;text-align:center;vertical-align:middle;">
-                        <div style="width:15px;height:10px;background-color:#0d1448;border-radius:2px;margin:0 auto;"></div>
+                      <td style="width:26px;height:26px;vertical-align:middle;">
+                        <img src="https://www.conference.contact/icons/icon-64.png" width="26" height="26" alt="conference.contact" style="display:block;border-radius:7px;" />
                       </td>
                       <td style="padding-left:8px;font-size:16px;font-weight:800;color:#12152b;">conference<span style="color:#a9c022;">.</span>contact</td>
                     </tr>
@@ -137,7 +142,7 @@ import AdminNav from "../../components/AdminNav.astro";
                   </div>
                   <p style="text-align:center;margin-top:18px;font-size:11px;color:#9395a6;">conference.contact — the verified conference contact directory</p>
                   <p style="text-align:center;margin-top:10px;font-size:11px;color:#9395a6;"><a href="#" style="color:#9395a6;text-decoration:underline;">Unsubscribe</a> from emails like this.</p>
-                  <p style="text-align:center;margin-top:6px;font-size:10px;color:#b3b5c2;">Evercontractor LLC, 1111B S Governors Ave STE 21889, Dover, DE 19904</p>
+                  <p id="preview-mailing-address" style="text-align:center;margin-top:6px;font-size:10px;color:#b3b5c2;"></p>
                 </div>
               </div>
             </div>
@@ -536,6 +541,7 @@ import AdminNav from "../../components/AdminNav.astro";
     body: string;
     ctaLabel: string;
     footnote: string;
+    mailingAddress: string;
   }
 
   const templateSubject = document.querySelector<HTMLInputElement>("#template-subject")!;
@@ -543,6 +549,7 @@ import AdminNav from "../../components/AdminNav.astro";
   const templateBody = document.querySelector<HTMLTextAreaElement>("#template-body")!;
   const templateCta = document.querySelector<HTMLInputElement>("#template-cta")!;
   const templateFootnote = document.querySelector<HTMLInputElement>("#template-footnote")!;
+  const templateMailingAddress = document.querySelector<HTMLInputElement>("#template-mailing-address")!;
   const templateSave = document.querySelector<HTMLButtonElement>("#template-save")!;
   const templateSaveStatus = document.querySelector<HTMLParagraphElement>("#template-save-status")!;
 
@@ -551,6 +558,7 @@ import AdminNav from "../../components/AdminNav.astro";
   const previewBody = document.querySelector<HTMLParagraphElement>("#preview-body")!;
   const previewCta = document.querySelector<HTMLAnchorElement>("#preview-cta")!;
   const previewFootnote = document.querySelector<HTMLParagraphElement>("#preview-footnote")!;
+  const previewMailingAddress = document.querySelector<HTMLParagraphElement>("#preview-mailing-address")!;
 
   function refreshTemplatePreview(): void {
     previewSubject.textContent = templateSubject.value;
@@ -558,8 +566,9 @@ import AdminNav from "../../components/AdminNav.astro";
     previewBody.textContent = templateBody.value;
     previewCta.textContent = templateCta.value;
     previewFootnote.textContent = templateFootnote.value;
+    previewMailingAddress.textContent = templateMailingAddress.value;
   }
-  [templateSubject, templateHeading, templateBody, templateCta, templateFootnote].forEach((el) =>
+  [templateSubject, templateHeading, templateBody, templateCta, templateFootnote, templateMailingAddress].forEach((el) =>
     el.addEventListener("input", refreshTemplatePreview),
   );
 
@@ -570,6 +579,7 @@ import AdminNav from "../../components/AdminNav.astro";
     templateBody.value = template.body;
     templateCta.value = template.ctaLabel;
     templateFootnote.value = template.footnote;
+    templateMailingAddress.value = template.mailingAddress;
     refreshTemplatePreview();
   }
 
@@ -586,6 +596,7 @@ import AdminNav from "../../components/AdminNav.astro";
           body: templateBody.value,
           ctaLabel: templateCta.value,
           footnote: templateFootnote.value,
+          mailingAddress: templateMailingAddress.value,
         }),
       });
       templateSaveStatus.textContent = "Saved — this is now what sends.";
