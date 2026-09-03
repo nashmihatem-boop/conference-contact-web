@@ -438,7 +438,34 @@ import AdminNav from "../../components/AdminNav.astro";
   const sendNowStatus = document.querySelector<HTMLParagraphElement>("#send-now-status")!;
 
   sendNowSubmit.addEventListener("click", async () => {
+    // A cap typed into the box but never explicitly saved would otherwise
+    // still be sitting there unused — "Send now" would silently fall back
+    // to whatever was last saved (possibly a much higher number from
+    // earlier) instead of what's actually showing on screen. Saving first,
+    // every time, means what you see here is always what happens.
+    const capValue = Number(dailyCapInput.value);
+    if (!Number.isFinite(capValue) || capValue < 1) {
+      sendNowStatus.textContent = "Enter a valid daily cap before sending.";
+      sendNowStatus.className = "text-[13px] text-red-600";
+      return;
+    }
     sendNowSubmit.disabled = true;
+    sendNowStatus.textContent = "Saving daily cap…";
+    sendNowStatus.className = "text-[13px] text-ink-soft";
+    try {
+      await authFetch("/admin/prospects/campaign/settings", {
+        method: "PATCH",
+        body: JSON.stringify({ dailyCap: capValue }),
+      });
+      settingsStatus.textContent = "Saved.";
+      settingsStatus.className = "text-[13px] text-navy";
+    } catch (err) {
+      sendNowStatus.textContent = "";
+      handleAdminError(err, errorBanner);
+      sendNowSubmit.disabled = false;
+      return;
+    }
+
     sendNowStatus.textContent = "Sending…";
     sendNowStatus.className = "text-[13px] text-ink-soft";
     try {
