@@ -56,8 +56,10 @@ import AdminNav from "../../components/AdminNav.astro";
         </div>
         <button id="daily-cap-save" type="button" class="rounded-lg border border-line px-4 py-2 text-[13px] font-semibold text-navy transition-colors hover:border-navy">Save</button>
         <button id="campaign-pause-toggle" type="button" class="rounded-lg border border-line px-4 py-2 text-[13px] font-semibold text-navy transition-colors hover:border-navy">Pause</button>
+        <button id="send-now-submit" type="button" class="rounded-lg bg-navy px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">Send now</button>
         <p id="campaign-settings-status" class="text-[13px]"></p>
       </div>
+      <p id="send-now-status" class="text-[13px]"></p>
 
       <div class="mt-5 border-t border-line pt-4">
         <p class="text-[14px] font-semibold text-ink">Upload prospects</p>
@@ -392,6 +394,34 @@ import AdminNav from "../../components/AdminNav.astro";
       handleAdminError(err, errorBanner);
     } finally {
       pauseToggle.disabled = false;
+    }
+  });
+
+  const sendNowSubmit = document.querySelector<HTMLButtonElement>("#send-now-submit")!;
+  const sendNowStatus = document.querySelector<HTMLParagraphElement>("#send-now-status")!;
+
+  sendNowSubmit.addEventListener("click", async () => {
+    sendNowSubmit.disabled = true;
+    sendNowStatus.textContent = "Sending…";
+    sendNowStatus.className = "text-[13px] text-ink-soft";
+    try {
+      const result = await authFetch<{
+        sent: number;
+        skippedExisting: number;
+        skippedUnsubscribed: number;
+        batchSize: number;
+      }>("/admin/prospects/campaign/send-now", { method: "POST" });
+      sendNowStatus.textContent =
+        result.batchSize === 0
+          ? "Nothing to send — campaign is paused or the queue is empty."
+          : `Sent ${result.sent.toLocaleString()} of ${result.batchSize.toLocaleString()} — ${(result.skippedExisting + result.skippedUnsubscribed).toLocaleString()} skipped.`;
+      sendNowStatus.className = "text-[13px] text-navy";
+      await loadCampaignStats();
+    } catch (err) {
+      sendNowStatus.textContent = "";
+      handleAdminError(err, errorBanner);
+    } finally {
+      sendNowSubmit.disabled = false;
     }
   });
 
