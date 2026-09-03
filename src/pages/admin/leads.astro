@@ -115,6 +115,13 @@ import AdminNav from "../../components/AdminNav.astro";
             <option value="false">Pending review</option>
             <option value="true">Approved</option>
           </select>
+          <div class="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-[13px] text-ink-soft">
+            <span class="text-ink-faint">Added</span>
+            <input id="from-date-input" type="date" aria-label="From date" class="w-[130px] border-0 p-0 text-[13px] text-ink-soft focus:outline-none" />
+            <span class="text-ink-faint">–</span>
+            <input id="to-date-input" type="date" aria-label="To date" class="w-[130px] border-0 p-0 text-[13px] text-ink-soft focus:outline-none" />
+            <button id="clear-date-button" type="button" hidden class="ml-1 text-[12px] font-medium text-navy hover:text-navy-mid">Clear</button>
+          </div>
         </div>
         <button
           id="add-lead-button"
@@ -134,6 +141,7 @@ import AdminNav from "../../components/AdminNav.astro";
               <th class="px-4 py-3 font-semibold">Contact details</th>
               <th class="px-4 py-3 font-semibold">Likely to attend</th>
               <th class="px-4 py-3 font-semibold">Type</th>
+              <th class="px-4 py-3 font-semibold">Added</th>
               <th class="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
@@ -173,6 +181,7 @@ import AdminNav from "../../components/AdminNav.astro";
     likelyToAttend: string;
     approved: boolean;
     submittedBy: { id: string; email: string; fullName: string } | null;
+    createdAt: string;
   }
   interface LeadsPage {
     data: Lead[];
@@ -191,6 +200,9 @@ import AdminNav from "../../components/AdminNav.astro";
   const eventSelect = document.querySelector<HTMLSelectElement>("#event-select")!;
   const typeSelect = document.querySelector<HTMLSelectElement>("#type-select")!;
   const approvedSelect = document.querySelector<HTMLSelectElement>("#approved-select")!;
+  const fromDateInput = document.querySelector<HTMLInputElement>("#from-date-input")!;
+  const toDateInput = document.querySelector<HTMLInputElement>("#to-date-input")!;
+  const clearDateButton = document.querySelector<HTMLButtonElement>("#clear-date-button")!;
   const resultsBody = document.querySelector<HTMLTableSectionElement>("#results-body")!;
   const prevButton = document.querySelector<HTMLButtonElement>("#prev-page")!;
   const nextButton = document.querySelector<HTMLButtonElement>("#next-page")!;
@@ -225,7 +237,13 @@ import AdminNav from "../../components/AdminNav.astro";
     if (eventSelect.value) params.set("likelyToAttend", eventSelect.value);
     if (typeSelect.value) params.set("companyType", typeSelect.value);
     if (approvedSelect.value) params.set("approved", approvedSelect.value);
+    if (fromDateInput.value) params.set("fromDate", fromDateInput.value);
+    if (toDateInput.value) params.set("toDate", toDateInput.value);
     return params;
+  }
+
+  function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   }
 
   function contactCell(lead: Lead): string {
@@ -249,6 +267,7 @@ import AdminNav from "../../components/AdminNav.astro";
         <td class="px-4 py-3">${contactCell(lead)}</td>
         <td class="px-4 py-3"><span class="whitespace-nowrap rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy">${escapeHtml(lead.likelyToAttend)}</span></td>
         <td class="px-4 py-3"><span class="whitespace-nowrap rounded-full bg-bg-soft px-2.5 py-1 text-[12px] font-medium text-ink-soft">${escapeHtml(formatCompanyType(lead.companyType))}</span></td>
+        <td class="whitespace-nowrap px-4 py-3 text-[13px] text-ink-soft">${escapeHtml(formatDate(lead.createdAt))}</td>
         <td class="px-4 py-3">
           <div class="flex flex-col gap-1.5">
             ${!lead.approved ? `<button type="button" data-approve="${escapeHtml(lead.id)}" class="text-[12px] font-medium text-navy hover:text-navy-mid">Approve</button>` : ""}
@@ -264,7 +283,7 @@ import AdminNav from "../../components/AdminNav.astro";
   function renderRows(leads: Lead[]): void {
     currentLeads = leads;
     if (leads.length === 0) {
-      resultsBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-[13px] text-ink-faint">No leads match these filters.</td></tr>`;
+      resultsBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-[13px] text-ink-faint">No leads match these filters.</td></tr>`;
       return;
     }
     resultsBody.innerHTML = leads.map(rowHtml).join("");
@@ -426,6 +445,23 @@ import AdminNav from "../../components/AdminNav.astro";
   eventSelect.addEventListener("change", () => loadPage(1));
   typeSelect.addEventListener("change", () => loadPage(1));
   approvedSelect.addEventListener("change", () => loadPage(1));
+  function updateClearButtonVisibility(): void {
+    clearDateButton.hidden = !fromDateInput.value && !toDateInput.value;
+  }
+  fromDateInput.addEventListener("change", () => {
+    updateClearButtonVisibility();
+    loadPage(1);
+  });
+  toDateInput.addEventListener("change", () => {
+    updateClearButtonVisibility();
+    loadPage(1);
+  });
+  clearDateButton.addEventListener("click", () => {
+    fromDateInput.value = "";
+    toDateInput.value = "";
+    updateClearButtonVisibility();
+    loadPage(1);
+  });
   prevButton.addEventListener("click", () => loadPage(currentPage - 1));
   nextButton.addEventListener("click", () => loadPage(currentPage + 1));
 
