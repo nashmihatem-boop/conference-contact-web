@@ -82,44 +82,76 @@ import AdminNav from "../../components/AdminNav.astro";
       </div>
 
       <div class="mt-5 border-t border-line pt-4">
-        <p class="text-[14px] font-semibold text-ink">Email preview</p>
-        <p class="mt-1 text-[13px] text-ink-soft">Exactly what each queued address receives — same subject, template, and compliance footer as the real send.</p>
+        <p class="text-[14px] font-semibold text-ink">Email template</p>
+        <p class="mt-1 text-[13px] text-ink-soft">Edit the copy sent to every queued address — the preview updates as you type. The unsubscribe link and mailing address are fixed (legally required) and can't be changed here.</p>
 
-        <div class="mt-3 max-w-[420px] overflow-hidden rounded-2xl border border-line">
-          <div class="border-b border-line bg-bg-soft px-4 py-2.5">
-            <p class="text-[13px] font-semibold text-ink">You've been invited to check out conference.contact</p>
-            <p class="mt-0.5 text-[12px] text-ink-faint">From: conference.contact &lt;noreply@conference.contact&gt;</p>
+        <div class="mt-3 grid gap-6 lg:grid-cols-2">
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-1">
+              <label for="template-subject" class="text-[12px] font-medium text-ink-soft">Subject</label>
+              <input id="template-subject" type="text" maxlength="200" class="w-full rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="template-heading" class="text-[12px] font-medium text-ink-soft">Heading</label>
+              <input id="template-heading" type="text" maxlength="200" class="w-full rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="template-body" class="text-[12px] font-medium text-ink-soft">Body</label>
+              <textarea id="template-body" rows="4" maxlength="2000" class="w-full rounded-lg border border-line px-3 py-2 text-[13px] text-ink focus:outline-none"></textarea>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="template-cta" class="text-[12px] font-medium text-ink-soft">Button text</label>
+              <input id="template-cta" type="text" maxlength="60" class="w-full rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="template-footnote" class="text-[12px] font-medium text-ink-soft">Footnote</label>
+              <input id="template-footnote" type="text" maxlength="300" class="w-full rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
+            </div>
+            <div class="mt-1 flex flex-wrap items-center gap-3">
+              <button id="template-save" type="button" class="rounded-lg bg-navy px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-navy-mid">Save template</button>
+              <p id="template-save-status" class="text-[13px]"></p>
+            </div>
           </div>
-          <div style="background-color:#eeeef0;padding:28px 18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <div style="max-width:380px;margin:0 auto;">
-              <table role="presentation" style="margin:0 auto 22px;" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="width:26px;height:26px;background-color:#c3db42;border-radius:7px;text-align:center;vertical-align:middle;">
-                    <div style="width:15px;height:10px;background-color:#0d1448;border-radius:2px;margin:0 auto;"></div>
-                  </td>
-                  <td style="padding-left:8px;font-size:16px;font-weight:800;color:#12152b;">conference<span style="color:#a9c022;">.</span>contact</td>
-                </tr>
-              </table>
-              <div style="background-color:#ffffff;border:1px solid #e2e2e7;border-radius:16px;padding:28px 22px;text-align:center;">
-                <h1 style="margin:0;font-size:18px;font-weight:800;color:#12152b;line-height:1.35;">Thought this might be useful</h1>
-                <p style="margin:14px 0 0;font-size:14px;color:#5b5f73;line-height:1.6;">A hand-verified directory of B2B conference contacts, with an AI tool that finds and enriches new leads live — take a look and see what's inside.</p>
-                <a href="#" style="display:inline-block;margin-top:22px;background-color:#c6e02e;color:#0b1454;font-weight:700;font-size:14px;text-decoration:none;padding:12px 28px;border-radius:999px;">Take a look →</a>
-                <p style="margin:16px 0 0;font-size:12px;color:#9395a6;text-align:left;">No obligation — you can create a free account just to browse.</p>
+
+          <div>
+            <div class="max-w-[420px] overflow-hidden rounded-2xl border border-line">
+              <div class="border-b border-line bg-bg-soft px-4 py-2.5">
+                <p id="preview-subject" class="text-[13px] font-semibold text-ink"></p>
+                <p class="mt-0.5 text-[12px] text-ink-faint">From: conference.contact &lt;noreply@conference.contact&gt;</p>
               </div>
-              <p style="text-align:center;margin-top:18px;font-size:11px;color:#9395a6;">conference.contact — the verified conference contact directory</p>
-              <p style="text-align:center;margin-top:10px;font-size:11px;color:#9395a6;"><a href="#" style="color:#9395a6;text-decoration:underline;">Unsubscribe</a> from emails like this.</p>
-              <p style="text-align:center;margin-top:6px;font-size:10px;color:#b3b5c2;">Evercontractor LLC, 1111B S Governors Ave STE 21889, Dover, DE 19904</p>
+              <div style="background-color:#eeeef0;padding:28px 18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                <div style="max-width:380px;margin:0 auto;">
+                  <table role="presentation" style="margin:0 auto 22px;" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:26px;height:26px;background-color:#c3db42;border-radius:7px;text-align:center;vertical-align:middle;">
+                        <div style="width:15px;height:10px;background-color:#0d1448;border-radius:2px;margin:0 auto;"></div>
+                      </td>
+                      <td style="padding-left:8px;font-size:16px;font-weight:800;color:#12152b;">conference<span style="color:#a9c022;">.</span>contact</td>
+                    </tr>
+                  </table>
+                  <div style="background-color:#ffffff;border:1px solid #e2e2e7;border-radius:16px;padding:28px 22px;text-align:center;">
+                    <h1 id="preview-heading" style="margin:0;font-size:18px;font-weight:800;color:#12152b;line-height:1.35;"></h1>
+                    <p id="preview-body" style="margin:14px 0 0;font-size:14px;color:#5b5f73;line-height:1.6;"></p>
+                    <a href="#" id="preview-cta" style="display:inline-block;margin-top:22px;background-color:#c6e02e;color:#0b1454;font-weight:700;font-size:14px;text-decoration:none;padding:12px 28px;border-radius:999px;"></a>
+                    <p id="preview-footnote" style="margin:16px 0 0;font-size:12px;color:#9395a6;text-align:left;"></p>
+                  </div>
+                  <p style="text-align:center;margin-top:18px;font-size:11px;color:#9395a6;">conference.contact — the verified conference contact directory</p>
+                  <p style="text-align:center;margin-top:10px;font-size:11px;color:#9395a6;"><a href="#" style="color:#9395a6;text-decoration:underline;">Unsubscribe</a> from emails like this.</p>
+                  <p style="text-align:center;margin-top:6px;font-size:10px;color:#b3b5c2;">Evercontractor LLC, 1111B S Governors Ave STE 21889, Dover, DE 19904</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="mt-3 flex flex-wrap items-end gap-3">
+        <div class="mt-4 flex flex-wrap items-end gap-3 border-t border-line pt-4">
           <div class="flex flex-col gap-1">
             <label for="test-send-email" class="text-[12px] font-medium text-ink-soft">Send a real test to</label>
             <input id="test-send-email" type="email" autocomplete="off" placeholder="you@company.com" class="w-64 rounded-lg border border-line px-3 py-2 text-[14px] text-ink focus:outline-none" />
           </div>
           <button id="test-send-submit" type="button" class="rounded-lg border border-line px-4 py-2 text-[13px] font-semibold text-navy transition-colors hover:border-navy">Send test email</button>
         </div>
+        <p class="mt-1.5 text-[12px] text-ink-faint">Test sends (and the real campaign) use the last <strong>saved</strong> template — save your edits first if you've changed anything above.</p>
         <p id="test-send-status" class="mt-2 text-[13px]"></p>
       </div>
     </div>
@@ -498,6 +530,74 @@ import AdminNav from "../../components/AdminNav.astro";
     }
   });
 
+  interface EmailTemplate {
+    subject: string;
+    heading: string;
+    body: string;
+    ctaLabel: string;
+    footnote: string;
+  }
+
+  const templateSubject = document.querySelector<HTMLInputElement>("#template-subject")!;
+  const templateHeading = document.querySelector<HTMLInputElement>("#template-heading")!;
+  const templateBody = document.querySelector<HTMLTextAreaElement>("#template-body")!;
+  const templateCta = document.querySelector<HTMLInputElement>("#template-cta")!;
+  const templateFootnote = document.querySelector<HTMLInputElement>("#template-footnote")!;
+  const templateSave = document.querySelector<HTMLButtonElement>("#template-save")!;
+  const templateSaveStatus = document.querySelector<HTMLParagraphElement>("#template-save-status")!;
+
+  const previewSubject = document.querySelector<HTMLParagraphElement>("#preview-subject")!;
+  const previewHeading = document.querySelector<HTMLHeadingElement>("#preview-heading")!;
+  const previewBody = document.querySelector<HTMLParagraphElement>("#preview-body")!;
+  const previewCta = document.querySelector<HTMLAnchorElement>("#preview-cta")!;
+  const previewFootnote = document.querySelector<HTMLParagraphElement>("#preview-footnote")!;
+
+  function refreshTemplatePreview(): void {
+    previewSubject.textContent = templateSubject.value;
+    previewHeading.textContent = templateHeading.value;
+    previewBody.textContent = templateBody.value;
+    previewCta.textContent = templateCta.value;
+    previewFootnote.textContent = templateFootnote.value;
+  }
+  [templateSubject, templateHeading, templateBody, templateCta, templateFootnote].forEach((el) =>
+    el.addEventListener("input", refreshTemplatePreview),
+  );
+
+  async function loadEmailTemplate(): Promise<void> {
+    const template = await authFetch<EmailTemplate>("/admin/prospects/campaign/template");
+    templateSubject.value = template.subject;
+    templateHeading.value = template.heading;
+    templateBody.value = template.body;
+    templateCta.value = template.ctaLabel;
+    templateFootnote.value = template.footnote;
+    refreshTemplatePreview();
+  }
+
+  templateSave.addEventListener("click", async () => {
+    templateSave.disabled = true;
+    templateSaveStatus.textContent = "Saving…";
+    templateSaveStatus.className = "text-[13px] text-ink-soft";
+    try {
+      await authFetch<EmailTemplate>("/admin/prospects/campaign/template", {
+        method: "PATCH",
+        body: JSON.stringify({
+          subject: templateSubject.value,
+          heading: templateHeading.value,
+          body: templateBody.value,
+          ctaLabel: templateCta.value,
+          footnote: templateFootnote.value,
+        }),
+      });
+      templateSaveStatus.textContent = "Saved — this is now what sends.";
+      templateSaveStatus.className = "text-[13px] text-navy";
+    } catch (err) {
+      templateSaveStatus.textContent = "";
+      handleAdminError(err, errorBanner);
+    } finally {
+      templateSave.disabled = false;
+    }
+  });
+
   const testSendEmail = document.querySelector<HTMLInputElement>("#test-send-email")!;
   const testSendSubmit = document.querySelector<HTMLButtonElement>("#test-send-submit")!;
   const testSendStatus = document.querySelector<HTMLParagraphElement>("#test-send-status")!;
@@ -530,7 +630,7 @@ import AdminNav from "../../components/AdminNav.astro";
   async function init(): Promise<void> {
     if (!(await requireSignedIn())) return;
     try {
-      await Promise.all([loadPage(1), loadCampaignStats()]);
+      await Promise.all([loadPage(1), loadCampaignStats(), loadEmailTemplate()]);
       loading.hidden = true;
       content.hidden = false;
     } catch (err) {
