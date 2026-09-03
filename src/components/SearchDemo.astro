@@ -118,12 +118,16 @@
       </tr>`;
   }
 
-  const SHOWCASE_EVENTS = [
-    "Affiliate Summit East 2026",
-    "Contact.io 2026",
-    "MAU Vegas 2026",
-    "Leadscon 2026",
-    "Affiliate Summit West 2026",
+  // Each slot names a real person and the specific event we want their row
+  // for — some people (e.g. Rakuten's Abbey Cerek) attend more than one
+  // conference in the data, so we filter to the right one instead of
+  // trusting result order.
+  const SHOWCASE_SLOTS = [
+    { query: "Abbey Cerek", event: "Affiliate Summit East 2026" },
+    { query: "Tim Haddad", event: "Contact.io 2026" },
+    { query: "Adam Woods", event: "MAU Vegas 2026" },
+    { query: "Adam Kovall", event: "Leadscon 2026" },
+    { query: "Aaron Summers", event: "Affiliate Summit West 2026" },
   ];
 
   async function renderShowcase(): Promise<void> {
@@ -132,13 +136,13 @@
       <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">Searching…</td></tr>`;
 
     try {
-      const perEvent = await Promise.all(
-        SHOWCASE_EVENTS.map((event) =>
-          apiFetch<PreviewLead[]>(`/leads/preview?search=${encodeURIComponent(event)}`),
+      const perSlot = await Promise.all(
+        SHOWCASE_SLOTS.map((slot) =>
+          apiFetch<PreviewLead[]>(`/leads/preview?search=${encodeURIComponent(slot.query)}`),
         ),
       );
-      const leads = perEvent
-        .map((matches) => matches[0])
+      const leads = perSlot
+        .map((matches, i) => matches.find((lead) => lead.likelyToAttend === SHOWCASE_SLOTS[i].event) ?? matches[0])
         .filter((lead): lead is PreviewLead => Boolean(lead));
       if (leads.length === 0) {
         resultsBody.innerHTML = `
