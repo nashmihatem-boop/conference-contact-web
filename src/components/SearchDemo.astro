@@ -118,6 +118,40 @@
       </tr>`;
   }
 
+  const SHOWCASE_EVENTS = [
+    "Affiliate Summit East 2026",
+    "Contact.io 2026",
+    "MAU Vegas 2026",
+    "Leadscon 2026",
+    "Affiliate Summit West 2026",
+  ];
+
+  async function renderShowcase(): Promise<void> {
+    queryLabel.textContent = "Real matches across 5 conferences";
+    resultsBody.innerHTML = `
+      <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">Searching…</td></tr>`;
+
+    try {
+      const perEvent = await Promise.all(
+        SHOWCASE_EVENTS.map((event) =>
+          apiFetch<PreviewLead[]>(`/leads/preview?search=${encodeURIComponent(event)}`),
+        ),
+      );
+      const leads = perEvent
+        .map((matches) => matches[0])
+        .filter((lead): lead is PreviewLead => Boolean(lead));
+      if (leads.length === 0) {
+        resultsBody.innerHTML = `
+          <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">No results right now — try again shortly.</td></tr>`;
+        return;
+      }
+      resultsBody.innerHTML = leads.map((lead, i) => rowHtml(lead, i === leads.length - 1)).join("");
+    } catch {
+      resultsBody.innerHTML = `
+        <tr><td colspan="5" class="px-4 py-8 text-center text-[13px] text-ink-faint">Search unavailable right now — try again shortly.</td></tr>`;
+    }
+  }
+
   async function render(query: string): Promise<void> {
     queryLabel.textContent = query || "All contacts";
     if (query.trim().length < 2) {
@@ -158,5 +192,5 @@
     void render(detail?.query?.trim() ?? "");
   });
 
-  void render("Affiliate Summit East 2026");
+  void renderShowcase();
 </script>
