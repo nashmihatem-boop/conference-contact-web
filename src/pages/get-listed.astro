@@ -80,10 +80,11 @@ import Footer from "../components/Footer.astro";
           </div>
 
           <div>
-            <label for="listing-event" class="mb-1.5 block text-[13px] font-semibold text-ink">Conference you're likely to attend</label>
-            <select id="listing-event" required class="w-full rounded-xl border-2 border-line bg-white px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none">
-              <option value="" selected>Select a conference…</option>
-            </select>
+            <label class="mb-1.5 block text-[13px] font-semibold text-ink">Conferences you're likely to attend <span class="font-normal text-ink-faint">(select up to 5)</span></label>
+            <div id="listing-events" class="flex flex-wrap gap-2">
+              <p class="text-[13px] text-ink-faint">Loading conferences…</p>
+            </div>
+            <p id="listing-events-error" hidden class="mt-1.5 text-[12px] text-red-600"></p>
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -135,7 +136,8 @@ import Footer from "../components/Footer.astro";
   const listingCompanyType = document.querySelector<HTMLSelectElement>("#listing-company-type")!;
   const listingPhone = document.querySelector<HTMLInputElement>("#listing-phone")!;
   const listingWebsite = document.querySelector<HTMLInputElement>("#listing-website")!;
-  const listingEvent = document.querySelector<HTMLSelectElement>("#listing-event")!;
+  const listingEventsContainer = document.querySelector<HTMLDivElement>("#listing-events")!;
+  const listingEventsError = document.querySelector<HTMLParagraphElement>("#listing-events-error")!;
   const listingEmail = document.querySelector<HTMLInputElement>("#listing-email")!;
   const listingLinkedin = document.querySelector<HTMLInputElement>("#listing-linkedin")!;
   const listingFeedback = document.querySelector<HTMLParagraphElement>("#listing-feedback")!;
@@ -153,17 +155,55 @@ import Footer from "../components/Footer.astro";
     errorBanner.hidden = false;
   }
 
+  const MAX_EVENTS = 5;
+  const selectedEvents = new Set<string>();
+  const CHIP_BASE =
+    "rounded-full border-2 px-3.5 py-1.5 text-[13px] font-medium transition-colors";
+  const CHIP_UNSELECTED = `${CHIP_BASE} border-line bg-white text-ink-soft hover:border-navy/40`;
+  const CHIP_SELECTED = `${CHIP_BASE} border-navy bg-lime-tint text-navy`;
+
+  function toggleEvent(event: string, button: HTMLButtonElement): void {
+    if (selectedEvents.has(event)) {
+      selectedEvents.delete(event);
+      button.className = CHIP_UNSELECTED;
+      button.setAttribute("aria-pressed", "false");
+    } else {
+      if (selectedEvents.size >= MAX_EVENTS) {
+        listingEventsError.textContent = `You can select up to ${MAX_EVENTS} conferences at a time.`;
+        listingEventsError.hidden = false;
+        return;
+      }
+      selectedEvents.add(event);
+      button.className = CHIP_SELECTED;
+      button.setAttribute("aria-pressed", "true");
+    }
+    listingEventsError.hidden = true;
+  }
+
   async function loadEventOptions(): Promise<void> {
     try {
       const events = await authFetch<string[]>("/leads/self/events");
+      listingEventsContainer.innerHTML = "";
       for (const event of events) {
-        const option = document.createElement("option");
-        option.value = event;
-        option.textContent = event;
-        listingEvent.appendChild(option);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = event;
+        button.setAttribute("aria-pressed", "false");
+        button.className = CHIP_UNSELECTED;
+        button.addEventListener("click", () => toggleEvent(event, button));
+        listingEventsContainer.appendChild(button);
       }
     } catch {
-      // Non-fatal — the dropdown just stays at "Select a conference…" if this fails.
+      listingEventsContainer.innerHTML =
+        '<p class="text-[13px] text-red-600">Couldn\'t load the conference list. Please refresh.</p>';
+    }
+  }
+
+  function resetEventChips(): void {
+    selectedEvents.clear();
+    for (const button of listingEventsContainer.querySelectorAll<HTMLButtonElement>("button")) {
+      button.className = CHIP_UNSELECTED;
+      button.setAttribute("aria-pressed", "false");
     }
   }
 
@@ -187,45 +227,70 @@ import Footer from "../components/Footer.astro";
 
   listingForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (selectedEvents.size === 0) {
+      listingEventsError.textContent = "Select at least one conference.";
+      listingEventsError.hidden = false;
+      return;
+    }
+
+    const events = Array.from(selectedEvents);
     listingSubmit.disabled = true;
-    listingSubmit.textContent = "Submitting…";
     listingFeedback.hidden = true;
-    try {
-      await authFetch<{ message: string }>("/leads/self", {
-        method: "POST",
-        body: JSON.stringify({
-          name: listingName.value.trim(),
-          title: listingTitle.value.trim() || undefined,
-          company: listingCompany.value.trim() || undefined,
-          companyType: listingCompanyType.value,
-          website: listingWebsite.value.trim() || undefined,
-          likelyToAttend: listingEvent.value,
-          email: listingEmail.value.trim() || undefined,
-          phone: listingPhone.value.trim() || undefined,
-          linkedin: listingLinkedin.value.trim() || undefined,
-        }),
-      });
-      listingFeedback.textContent = "✓ Submitted — we'll review it before it goes live.";
+
+    const base = {
+      name: listingName.value.trim(),
+      title: listingTitle.value.trim() || undefined,
+      company: listingCompany.value.trim() || undefined,
+      companyType: listingCompanyType.value,
+      website: listingWebsite.value.trim() || undefined,
+      email: listingEmail.value.trim() || undefined,
+      phone: listingPhone.value.trim() || undefined,
+      linkedin: listingLinkedin.value.trim() || undefined,
+    };
+
+    // Each conference is a separate Lead row server-side (one call per
+    // event, same shape as a single submission) — sequential, not
+    // parallel, so we never burst past the endpoint's own rate limit.
+    let succeeded = 0;
+    let lastError: unknown;
+    for (const likelyToAttend of events) {
+      listingSubmit.textContent =
+        events.length === 1 ? "Submitting…" : `Submitting… (${succeeded + 1}/${events.length})`;
+      try {
+        await authFetch<{ message: string }>("/leads/self", {
+          method: "POST",
+          body: JSON.stringify({ ...base, likelyToAttend }),
+        });
+        succeeded++;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    const failed = events.length - succeeded;
+    if (succeeded > 0 && failed === 0) {
+      listingFeedback.textContent = `✓ Submitted for ${succeeded} conference${succeeded === 1 ? "" : "s"} — we'll review before ${succeeded === 1 ? "it goes" : "they go"} live.`;
       listingFeedback.className = "rounded-xl border border-line bg-lime-tint px-4 py-3 text-[13px] font-medium text-ink";
-      listingFeedback.hidden = false;
       listingName.value = "";
       listingTitle.value = "";
       listingCompany.value = "";
       listingCompanyType.value = "";
       listingPhone.value = "";
       listingWebsite.value = "";
-      listingEvent.value = "";
       listingEmail.value = "";
       listingLinkedin.value = "";
-    } catch (err) {
-      listingFeedback.textContent =
-        err instanceof ApiError ? err.message : "Couldn't submit that. Please try again.";
+      resetEventChips();
+    } else if (succeeded > 0) {
+      listingFeedback.textContent = `Submitted for ${succeeded} of ${events.length} conferences — ${failed} didn't go through. Please try again.`;
       listingFeedback.className = "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700";
-      listingFeedback.hidden = false;
-    } finally {
-      listingSubmit.disabled = false;
-      listingSubmit.textContent = "Submit for review";
+    } else {
+      listingFeedback.textContent =
+        lastError instanceof ApiError ? lastError.message : "Couldn't submit that. Please try again.";
+      listingFeedback.className = "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700";
     }
+    listingFeedback.hidden = false;
+    listingSubmit.disabled = false;
+    listingSubmit.textContent = "Submit for review";
   });
 
   if (!(await ensureAuthenticated())) {
