@@ -1,13 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/maintenance" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, must-revalidate" }
-      ]
-    }
+  "routes": [
+    { "src": "/maintenance", "dest": "/maintenance", "headers": { "Cache-Control": "no-store, must-revalidate" } },
+    { "src": "/(.*)", "dest": "/maintenance", "headers": { "Cache-Control": "no-store, must-revalidate" } }
   ]
 }
