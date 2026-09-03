@@ -88,85 +88,20 @@ import Footer from "../components/Footer.astro";
         </button>
       </form>
 
-      <!-- Self-service directory listing request -->
-      <div id="listing-section" hidden class="rounded-2xl bg-white p-7 shadow-[0_18px_45px_-30px_rgba(11,20,84,0.4)]">
-        <p class="text-[13px] font-semibold uppercase tracking-wide text-ink-faint">Directory listing</p>
-        <h2 class="mt-1.5 font-display text-lg font-extrabold tracking-tight text-ink">Not in the directory yet?</h2>
-        <p class="mt-1 text-[13px] text-ink-soft">
-          Request to add yourself. Every submission is reviewed by hand before it goes live — same as the rest of the dataset. To correct or remove an existing listing, <a href="/contact?reason=remove_record" class="font-semibold text-navy hover:text-navy-mid">contact us</a> instead.
-        </p>
-
-        <form id="listing-form" class="mt-4 flex flex-col gap-4">
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label for="listing-name" class="mb-1.5 block text-[13px] font-semibold text-ink">Name</label>
-              <input id="listing-name" type="text" required maxlength="200" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none" />
-            </div>
-            <div>
-              <label for="listing-title" class="mb-1.5 block text-[13px] font-semibold text-ink">Title <span class="font-normal text-ink-faint">(optional)</span></label>
-              <input id="listing-title" type="text" maxlength="200" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none" />
-            </div>
-          </div>
-
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label for="listing-company" class="mb-1.5 block text-[13px] font-semibold text-ink">Company <span class="font-normal text-ink-faint">(optional)</span></label>
-              <input id="listing-company" type="text" maxlength="200" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none" />
-            </div>
-            <div>
-              <label for="listing-company-type" class="mb-1.5 block text-[13px] font-semibold text-ink">Type of company</label>
-              <select id="listing-company-type" required class="w-full rounded-xl border-2 border-line bg-white px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none">
-                <option value="" selected>Select one…</option>
-                <option value="ADVERTISER">Advertiser</option>
-                <option value="AD_NETWORK">Ad Network</option>
-                <option value="AFFILIATE">Affiliate</option>
-                <option value="AFFILIATE_NETWORK">Affiliate Network</option>
-                <option value="AGENCY">Agency</option>
-                <option value="SOLUTION_PROVIDER">Solution Provider</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label for="listing-phone" class="mb-1.5 block text-[13px] font-semibold text-ink">Phone <span class="font-normal text-ink-faint">(optional)</span></label>
-              <input id="listing-phone" type="tel" maxlength="50" placeholder="+1 555 123 4567" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none" />
-            </div>
-            <div>
-              <label for="listing-website" class="mb-1.5 block text-[13px] font-semibold text-ink">Company website <span class="font-normal text-ink-faint">(optional)</span></label>
-              <input id="listing-website" type="url" maxlength="500" placeholder="https://…" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none" />
-            </div>
-          </div>
-
-          <div>
-            <label for="listing-event" class="mb-1.5 block text-[13px] font-semibold text-ink">Conference you're likely to attend</label>
-            <select id="listing-event" required class="w-full rounded-xl border-2 border-line bg-white px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none">
-              <option value="" selected>Select a conference…</option>
-            </select>
-          </div>
-
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label for="listing-email" class="mb-1.5 block text-[13px] font-semibold text-ink">Email <span class="font-normal text-ink-faint">(optional)</span></label>
-              <input id="listing-email" type="email" maxlength="200" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink focus:border-navy focus:outline-none" />
-            </div>
-            <div>
-              <label for="listing-linkedin" class="mb-1.5 block text-[13px] font-semibold text-ink">LinkedIn <span class="font-normal text-ink-faint">(optional)</span></label>
-              <input id="listing-linkedin" type="url" maxlength="500" placeholder="https://linkedin.com/in/…" class="w-full rounded-xl border-2 border-line px-4 py-2.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-navy focus:outline-none" />
-            </div>
-          </div>
-
-          <p id="listing-feedback" hidden class="rounded-xl px-4 py-3 text-[13px] font-medium"></p>
-
-          <button
-            id="listing-submit"
-            type="submit"
-            class="w-full rounded-full bg-lime py-3 text-center text-[14px] font-semibold text-navy-dark transition-colors hover:bg-lime-dark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Submit for review
-          </button>
-        </form>
-      </div>
+      <!-- Full self-submit form now lives on its own page — /get-listed — so it can carry real marketing copy instead of being buried here. -->
+      <a
+        id="listing-section"
+        href="/get-listed"
+        hidden
+        class="group flex items-center justify-between gap-4 rounded-2xl bg-white p-7 shadow-[0_18px_45px_-30px_rgba(11,20,84,0.4)] transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-25px_rgba(11,20,84,0.4)]"
+      >
+        <div>
+          <p class="text-[13px] font-semibold uppercase tracking-wide text-ink-faint">Directory listing</p>
+          <h2 class="mt-1.5 font-display text-lg font-extrabold tracking-tight text-ink">Not in the directory yet?</h2>
+          <p class="mt-1 text-[13px] text-ink-soft">Add yourself so subscribers searching your conference can find you.</p>
+        </div>
+        <span class="shrink-0 text-[13px] font-semibold text-navy transition-transform group-hover:translate-x-0.5">Get listed →</span>
+      </a>
     </div>
   </div>
   <Footer />
@@ -195,19 +130,7 @@ import Footer from "../components/Footer.astro";
   const feedback = document.querySelector<HTMLParagraphElement>("#settings-feedback")!;
   const saveButton = document.querySelector<HTMLButtonElement>("#save-button")!;
 
-  const listingSection = document.querySelector<HTMLDivElement>("#listing-section")!;
-  const listingForm = document.querySelector<HTMLFormElement>("#listing-form")!;
-  const listingName = document.querySelector<HTMLInputElement>("#listing-name")!;
-  const listingTitle = document.querySelector<HTMLInputElement>("#listing-title")!;
-  const listingCompany = document.querySelector<HTMLInputElement>("#listing-company")!;
-  const listingCompanyType = document.querySelector<HTMLSelectElement>("#listing-company-type")!;
-  const listingPhone = document.querySelector<HTMLInputElement>("#listing-phone")!;
-  const listingWebsite = document.querySelector<HTMLInputElement>("#listing-website")!;
-  const listingEvent = document.querySelector<HTMLSelectElement>("#listing-event")!;
-  const listingEmail = document.querySelector<HTMLInputElement>("#listing-email")!;
-  const listingLinkedin = document.querySelector<HTMLInputElement>("#listing-linkedin")!;
-  const listingFeedback = document.querySelector<HTMLParagraphElement>("#listing-feedback")!;
-  const listingSubmit = document.querySelector<HTMLButtonElement>("#listing-submit")!;
+  const listingSection = document.querySelector<HTMLAnchorElement>("#listing-section")!;
 
   function handleError(err: unknown): void {
     loading.hidden = true;
@@ -219,20 +142,6 @@ import Footer from "../components/Footer.astro";
     errorBanner.textContent =
       err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
     errorBanner.hidden = false;
-  }
-
-  async function loadEventOptions(): Promise<void> {
-    try {
-      const events = await authFetch<string[]>("/leads/self/events");
-      for (const event of events) {
-        const option = document.createElement("option");
-        option.value = event;
-        option.textContent = event;
-        listingEvent.appendChild(option);
-      }
-    } catch {
-      // Non-fatal — the dropdown just stays at "Select a conference…" if this fails.
-    }
   }
 
   async function loadProfile(): Promise<void> {
@@ -248,15 +157,9 @@ import Footer from "../components/Footer.astro";
         ? "shrink-0 rounded-full bg-lime-tint px-2.5 py-1 text-[12px] font-medium text-navy"
         : "shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[12px] font-medium text-red-600";
 
-      // Prefill the listing form from the profile — still fully editable, since who they list themselves as isn't necessarily their account name.
-      listingName.value = profile.fullName;
-      listingEmail.value = profile.email;
-      listingPhone.value = profile.phone ?? "";
-
       loading.hidden = true;
       form.hidden = false;
       listingSection.hidden = false;
-      void loadEventOptions();
     } catch (err) {
       handleError(err);
     }
@@ -289,49 +192,6 @@ import Footer from "../components/Footer.astro";
     } finally {
       saveButton.disabled = false;
       saveButton.textContent = "Save changes";
-    }
-  });
-
-  listingForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    listingSubmit.disabled = true;
-    listingSubmit.textContent = "Submitting…";
-    listingFeedback.hidden = true;
-    try {
-      await authFetch<{ message: string }>("/leads/self", {
-        method: "POST",
-        body: JSON.stringify({
-          name: listingName.value.trim(),
-          title: listingTitle.value.trim() || undefined,
-          company: listingCompany.value.trim() || undefined,
-          companyType: listingCompanyType.value,
-          website: listingWebsite.value.trim() || undefined,
-          likelyToAttend: listingEvent.value,
-          email: listingEmail.value.trim() || undefined,
-          phone: listingPhone.value.trim() || undefined,
-          linkedin: listingLinkedin.value.trim() || undefined,
-        }),
-      });
-      listingFeedback.textContent = "✓ Submitted — we'll review it before it goes live.";
-      listingFeedback.className = "rounded-xl border border-line bg-lime-tint px-4 py-3 text-[13px] font-medium text-ink";
-      listingFeedback.hidden = false;
-      listingName.value = "";
-      listingTitle.value = "";
-      listingCompany.value = "";
-      listingCompanyType.value = "";
-      listingPhone.value = "";
-      listingWebsite.value = "";
-      listingEvent.value = "";
-      listingEmail.value = "";
-      listingLinkedin.value = "";
-    } catch (err) {
-      listingFeedback.textContent =
-        err instanceof ApiError ? err.message : "Couldn't submit that. Please try again.";
-      listingFeedback.className = "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700";
-      listingFeedback.hidden = false;
-    } finally {
-      listingSubmit.disabled = false;
-      listingSubmit.textContent = "Submit for review";
     }
   });
 
